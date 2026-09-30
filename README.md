@@ -19,6 +19,8 @@ Built for **Microsoft Innovate 2026 · Problem 8: The Review-Queue Bottleneck**.
 
 The deep reference is [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). This section is the visual tour: where each piece runs, how a pull request flows through Sift, and how code reaches production.
 
+Today Sift runs as a **GitHub Action** (one workflow file per repo). Next, after the hackathon, it becomes a one-click **GitHub App** that reviews every selected repo automatically, using the same pipeline ([ARCHITECTURE §7](docs/ARCHITECTURE.md#7-two-entry-points-github-action-now-github-app-next)).
+
 ### 1. Where everything runs
 
 ```mermaid

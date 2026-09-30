@@ -109,6 +109,7 @@ Write down what was merged, and re-run CI on `main` once GitHub recovers.
 | Question | Answer |
 |---|---|
 | How is this different from Copilot code review? | Copilot comments; Sift triages. Risk labels, a hard comment budget, dedupe across pushes and stacks, off-diff impact, and a published precision number. We also export conventions to Copilot's own instructions file, so the two work together. |
+| Why a GitHub Action and not an App? | The Action needs no server and was the safest thing to demo. The pipeline is shared, so the GitHub App (one-click install, every repo auto-onboarded) is a new entry point, not a rewrite. It's next on the roadmap. |
 | What if the AI is wrong? | Comments are advisory; a human approves. Wrong categories get dismissed, and low-severity categories with low precision auto-mute. Critical and security never mute. |
 | Prompt injection in a PR? | PR content is treated as data; the token can only comment. The worst case is one bad comment. |
 | How do you know it works? | 10 labelled PRs, labels committed before any run, 3 runs per reviewer, medians. The benchmark is reproducible with `pnpm bench`. |

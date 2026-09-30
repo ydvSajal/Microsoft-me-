@@ -79,7 +79,7 @@ Built only if all three gates in `docs/TIMELINE.md` are met on time. Each is ind
 
 ### Future (design for it, don't build it)
 
-GitHub App distribution · more languages · split-into-stack suggestions · org-wide dashboard · SSO.
+GitHub App distribution: one-click install, every selected repo (including new ones) reviewed automatically; planned as tickets T-29 → T-35 after the hackathon (ARCHITECTURE §7) · more languages · split-into-stack suggestions · org-wide dashboard · SSO.
 
 ## 6. Success metrics (measured by the benchmark)
 

@@ -26,10 +26,10 @@ If you finish a day with tickets left, **don't carry them silently**. Apply the 
 |---|---|---|
 | **Thu Oct 1** | T-01 → T-05 | `pnpm sift review` works on a real file; a direct push to `main` is rejected |
 | **Fri Oct 2** | T-06 → T-10 | **Gate 1:** a real PR on `sift-demo-shop` gets validated, diff-scoped comments. Self-review on. |
-| **Sat Oct 3** | T-11 → T-14 | **Gate 2:** ranked, deduped review with a risk label; re-push posts nothing new |
+| **Sat Oct 3** | T-11 → T-14, T-28 (small) | **Gate 2:** ranked, deduped review with a risk label; re-push posts nothing new |
 | **Sun Oct 4** | T-15 → T-17 | Stack rebase posts nothing; summary lists off-diff callers; 10 benchmark PRs labelled |
 | **Mon Oct 5** | T-18 → T-21 | **Gate 3 (freeze, EOD):** dashboard live on Vercel; benchmark numbers generated |
-| **Tue Oct 6** | T-22, fixes, rehearsal; P3 only if all gates were on time | Full dry run on the hotspot; backup video done |
+| **Tue Oct 6** | T-22, fixes, rehearsal; P3 only if all gates were on time | Full dry run on the hotspot; backup video done; roadmap slide: "Today: GitHub Action. Next: one-click GitHub App" |
 | **Wed Oct 7** | Demo | Top 20 |
 | **Thu Oct 8** | Finale | — |
 
@@ -49,6 +49,10 @@ If you finish a day with tickets left, **don't carry them silently**. Apply the 
 | Per ticket | Branch → agent or code → review the diff → `scripts/ship.sh` → start the next one while CI runs |
 | Midday (5 min) | On track for today's proof? If not, cut now, not at midnight |
 | End (15 min) | Verify the end-of-day proof on the demo repo; tick `docs/TASKS.md`; note blockers for tomorrow |
+
+## After the finale: GitHub App
+
+T-29 → T-35 in `docs/TASKS.md` turn Sift into a one-click GitHub App (ARCHITECTURE §7). Estimate: 2–3 focused days, because `runPrReview` is shared with the Action. Not before Oct 8.
 
 ## 5. If pre-building isn't allowed
 

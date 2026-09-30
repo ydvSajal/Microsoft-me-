@@ -37,6 +37,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 | ☐ | **T-12** | P0 | Rank + budget | `feat/t12-rank` | Score = weight × confidence; ≤7 inline; nits never inline; ordering tests |
 | ☐ | **T-13** | P0 | Dedupe | `feat/t13-dedupe` | Fingerprints + grouping per TRD §4.2; N files → 1 comment with "also in"; re-push posts 0 repeats |
 | ☐ | **T-14** | P0 | Risk tier + labels (**Gate 2**) | `feat/t14-risk` | Tier per TRD §4.4; exactly one `sift:risk-*` label, stale ones removed |
+| ☐ | **T-28** | P1 | Entry-point seams (App-ready) | `refactor/t28-seams` | `runPrReview` reads files only through an injected `readFile(path)` dep (default: the workspace reader) and reads no env or Action-only state; tests use an in-memory reader; zero behaviour change. Keeps the GitHub App (T-29+) a new entry point, not a rewrite. See ARCHITECTURE §7 |
 
 ## Oct 4 — differentiators + benchmark data
 
@@ -73,11 +74,26 @@ Each is independent, behind a flag, and cut without discussion if time is short.
 | ☐ | **T-26** | Buddy mood + route | `feat/t26-buddy-route` | `computeBuddyState()` per TRD §6 with tests; `GET /api/buddy`, `POST /api/buddy/ack` |
 | ☐ | **T-27** | Buddy firmware | `feat/t27-buddy-fw` | ESP32-S3 renders 7 moods at ~30 fps (network core 0, render core 1); button ack/snooze; long-press demo mode; `firmware-build` green |
 
+## Post-hackathon — GitHub App (after Oct 8)
+
+The second entry point from ARCHITECTURE §7: users install Sift once and every repo they select is reviewed automatically, with no workflow file or secrets. **Do not start before the finale.** The Action stays the demo path. Spec: TRD §10.
+
+| ✓ | ID | Ticket | Branch | Acceptance criteria |
+|---|---|---|---|---|
+| ☐ | **T-29** | App registration | `chore/t29-github-app` | App created from a committed manifest (permissions + events per TRD §10); private key + webhook secret in Vercel env only; DEPLOYMENT §11 documents setup |
+| ☐ | **T-30** | Webhook endpoint | `feat/t30-webhook` | `POST /api/github/webhook`: `X-Hub-Signature-256` verified in constant time, zod-validated, 1 MB cap, idempotent on `X-GitHub-Delivery`; unknown events → 204 |
+| ☐ | **T-31** | Installations + auto-onboarding | `feat/t31-installations` | Prisma `Installation` + `Repo.installationId`; `installation` and `installation_repositories` events add/remove repos and create the `sift:risk-*` labels; a newly created or newly granted repo appears on the dashboard with no user action |
+| ☐ | **T-32** | Installation tokens + API file reader | `feat/t32-app-client` | App JWT → short-lived installation token per job; `createGitHub()` accepts it; `readFile` via the contents API at `head.sha`; tokens never logged or stored |
+| ☐ | **T-33** | Review queue + worker | `feat/t33-review-queue` | Webhook enqueues a job and returns fast; a worker runs `runPrReview`; retries with backoff; per-installation concurrency and model-budget limits; a job failure never double-posts |
+| ☐ | **T-34** | Sign in with GitHub | `feat/t34-github-login` | Dashboard login via the App's OAuth; each user sees only repos from installations they can access; replaces the demo passcode for dashboard pages |
+| ☐ | **T-35** | Action and App coexistence | `feat/t35-coexist` | A repo with the App installed and the Action workflow gets **one** review per push: the Action detects the App (or a repo variable) and exits 0; documented migration from Action to App |
+
 ## Cut order if a gate slips
 
 1. All P3 (T-23 … T-27)
-2. T-20 feedback: keep the dashboard on review data only
-3. T-16 impact analysis
-4. T-15 stack awareness
+2. T-28 seams (the App is post-hackathon anyway)
+3. T-20 feedback: keep the dashboard on review data only
+4. T-16 impact analysis
+5. T-15 stack awareness
 
 **Never cut:** T-05 or T-19's paste page (single-file review), T-07/T-10 (diff-scoped), T-06 (human approver), T-12/T-13 (rank + dedupe), T-11 (summary), T-17/T-21 (benchmark; minimum 6 PRs).
