@@ -53,7 +53,7 @@ gh api -X PUT "repos/$REPO/branches/$BRANCH/protection" \
   "required_linear_history": true,
   "allow_force_pushes": false,
   "allow_deletions": false,
-  "required_conversation_resolution": true
+  "required_conversation_resolution": false
 }
 JSON
 
