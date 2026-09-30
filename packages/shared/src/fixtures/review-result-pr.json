@@ -1,0 +1,93 @@
+{
+  "mode": "pr",
+  "repo": "ydvSajal/sift-demo-shop",
+  "prNumber": 12,
+  "prTitle": "make getTotal async",
+  "author": "demo-author",
+  "requestedReviewers": ["senior-a", "senior-b"],
+  "headSha": "3f9c2d1e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e",
+  "riskTier": "high",
+  "whatChanged": "Makes `Cart.getTotal` async and adds `Cart.count`. Checkout logs a timestamp.",
+  "inline": [
+    {
+      "fingerprint": "9bd99466492c",
+      "file": "src/checkout.ts",
+      "line": 40,
+      "severity": "critical",
+      "category": "bug",
+      "ruleKey": "missing-await",
+      "title": "`cart.getTotal()` now returns a Promise and isn't awaited",
+      "body": "`getTotal` became async in this PR, so `total` is a Promise here. `total <= 0` is always false, which means an empty cart can check out.",
+      "suggestion": "const total = await cart.getTotal();",
+      "quotedCode": "const total = cart.getTotal();",
+      "confidence": 0.93,
+      "alsoIn": []
+    },
+    {
+      "fingerprint": "fd2e362cd615",
+      "file": "src/api/refund.ts",
+      "line": 12,
+      "severity": "high",
+      "category": "security",
+      "ruleKey": "missing-auth-check",
+      "title": "`refund` doesn't check who is asking",
+      "body": "Any caller can refund any order: `refund` never compares the order's owner with the signed-in user.",
+      "suggestion": "if (order.userId !== session.userId) throw new ForbiddenError();",
+      "quotedCode": "export async function refund(orderId: string, amount: number) {",
+      "confidence": 0.81,
+      "alsoIn": []
+    }
+  ],
+  "summarized": [
+    {
+      "fingerprint": "8a33b1c63a08",
+      "file": "src/checkout.ts",
+      "line": 38,
+      "severity": "low",
+      "category": "naming",
+      "ruleKey": "unclear-name",
+      "title": "`d` doesn't say what the date is for",
+      "body": "`d` is only used as the checkout timestamp. A name like `checkedOutAt` makes the log line read on its own.",
+      "suggestion": "const checkedOutAt = new Date();",
+      "quotedCode": "const d = new Date();",
+      "confidence": 0.7,
+      "alsoIn": [
+        {
+          "file": "src/cart.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "fingerprint": "ce5214f369d0",
+      "file": "src/auth.ts",
+      "line": 3,
+      "severity": "nit",
+      "category": "style",
+      "ruleKey": "inconsistent-quotes",
+      "title": "Single quotes in a double-quoted codebase",
+      "body": "The rest of the repo uses double quotes for imports.",
+      "quotedCode": "import { log } from './log';",
+      "confidence": 0.62,
+      "alsoIn": []
+    }
+  ],
+  "droppedCount": 2,
+  "impact": [
+    {
+      "symbol": "Cart.getTotal",
+      "file": "src/checkout.ts",
+      "line": 42
+    }
+  ],
+  "skippedFiles": [
+    {
+      "file": "public/logo.png",
+      "reason": "binary"
+    }
+  ],
+  "stats": {
+    "llmCalls": 4,
+    "durationMs": 41250
+  }
+}

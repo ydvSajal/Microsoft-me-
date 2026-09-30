@@ -1,0 +1,19 @@
+[
+  {
+    "filename": "src/cart.ts",
+    "status": "modified",
+    "patch": "@@ -10,7 +10,7 @@ export class Cart {\n   private items: CartItem[] = [];\n \n-  getTotal(): number {\n+  async getTotal(): Promise<number> {\n     return this.items.reduce((sum, i) => sum + i.price * i.qty, 0);\n   }\n \n@@ -40,6 +40,9 @@ export class Cart {\n   clear(): void {\n     this.items = [];\n   }\n+\n+  count(): number {\n+    return this.items.length;\n+  }\n }"
+  },
+  {
+    "filename": "src/checkout.ts",
+    "status": "modified",
+    "patch": "@@ -38,6 +38,7 @@ export async function checkout(cart: Cart, user: User) {\n   const d = new Date();\n-  const total = cart.getTotal();\n+  const total = cart.getTotal();\n+  log(`checkout ${user.id} at ${d.toISOString()}`);\n   if (total <= 0) throw new Error(\"Empty cart\");"
+  },
+  {
+    "filename": "src/old-coupons.ts",
+    "status": "removed",
+    "patch": "@@ -1,3 +0,0 @@\n-export const COUPONS = [];\n-\n-export default COUPONS;"
+  },
+  { "filename": "public/logo.png", "status": "added" },
+  { "filename": "src/api/refunds.ts", "previous_filename": "src/api/refund.ts", "status": "renamed" }
+]
