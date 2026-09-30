@@ -1,0 +1,33 @@
+name: Deploy smoke
+
+# Vercel's GitHub integration reports deployment statuses; check every successful deploy.
+on: deployment_status
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-smoke:
+    name: deploy-smoke
+    if: github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: GET /api/health
+        env:
+          URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          set -euo pipefail
+          url="${URL%/}/api/health"
+          headers=()
+          if [[ -n "${BYPASS:-}" ]]; then headers=(-H "x-vercel-protection-bypass: ${BYPASS}"); fi
+          body=""
+          for attempt in 1 2 3 4 5; do
+            if body=$(curl -fsS --max-time 20 "${headers[@]}" "$url"); then break; fi
+            echo "Attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          echo "Response: ${body}"
+          echo "${body}" | jq -e '.ok == true and .db == true' > /dev/null \
+            || { echo "::error::Health check failed for ${url}"; exit 1; }

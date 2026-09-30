@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+.next/
+coverage/
+.turbo/
+*.log
+firmware/buddy/.pio/
+firmware/buddy/include/secrets.h
+.DS_Store

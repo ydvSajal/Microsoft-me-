@@ -1,0 +1,41 @@
+name: Firmware
+
+on:
+  pull_request:
+    paths: ["firmware/**", ".github/workflows/firmware.yml"]
+  push:
+    branches: [main]
+    paths: ["firmware/**", ".github/workflows/firmware.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  firmware-build:
+    name: firmware-build   # not a required check (path-filtered)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: firmware/buddy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware/buddy/platformio.ini') }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --upgrade platformio
+      - name: Placeholder secrets for the CI build
+        run: cp include/secrets.example.h include/secrets.h
+      - run: pio run
+      - name: Upload firmware.bin (main only)
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: buddy-firmware-${{ github.sha }}
+          path: firmware/buddy/.pio/build/*/firmware.bin

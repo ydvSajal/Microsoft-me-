@@ -1,0 +1,48 @@
+name: PR hygiene
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-hygiene:
+    name: pr-hygiene     # exact name is a required status check
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check title, branch name, ticket ID and size
+        # PR fields go through env, never interpolated into the script (prevents injection).
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BRANCH: ${{ github.head_ref }}
+          BODY: ${{ github.event.pull_request.body }}
+          ADDITIONS: ${{ github.event.pull_request.additions }}
+          DELETIONS: ${{ github.event.pull_request.deletions }}
+        run: |
+          set -euo pipefail
+          fail=0
+          types='feat|fix|chore|docs|refactor|test|perf|ci|build'
+          scopes='core|ai|web|action|cli|shared|bench|firmware|repo'
+          title_re="^(${types})(\((${scopes})\))?!?: .{3,72}$"
+          branch_re="^(${types})/(t[0-9]{2}-)?[a-z0-9][a-z0-9-]*$"
+
+          if [[ ! "$TITLE" =~ $title_re ]]; then
+            echo "::error::PR title must look like 'feat(core): add diff map' (types: ${types}; scopes: ${scopes}; ≤72 chars after the colon). Got: $TITLE"
+            fail=1
+          fi
+          if [[ ! "$BRANCH" =~ $branch_re ]]; then
+            echo "::error::Branch must look like 'feat/t07-diff-map' (<type>/t<nn>-<description>, lowercase). Got: $BRANCH"
+            fail=1
+          fi
+          if ! grep -Eq '(^|[^A-Za-z])T-[0-9]{2}([^0-9]|$)|Ticket: none' <<< "${BODY:-}"; then
+            echo "::error::PR description needs a ticket ID from docs/TASKS.md (e.g. T-07) or the line 'Ticket: none'. scripts/ship.sh adds it from the branch name."
+            fail=1
+          fi
+          total=$(( ${ADDITIONS:-0} + ${DELETIONS:-0} ))
+          if (( total > 600 )); then
+            echo "::warning::This PR changes ${total} lines (lockfile included). Aim for under 400: split or stack it."
+          fi
+          exit $fail

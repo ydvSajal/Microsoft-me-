@@ -1,0 +1,61 @@
+name: Sift self-review
+
+# Sift (built from main) reviews every PR to this repo. Advisory only: not a required check.
+# Turn on after T-10:  gh variable set SIFT_SELF_REVIEW --body true
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write            # risk labels
+
+concurrency:
+  group: sift-self-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  sift-self-review:
+    name: sift-self-review
+    if: >-
+      vars.SIFT_SELF_REVIEW == 'true' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout the PR (code under review)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          path: target
+      - name: Checkout Sift from main (the reviewer), so a broken PR can't break its own review
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: .sift
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: .sift/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: .sift/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: .sift
+      - run: pnpm --filter action start
+        working-directory: .sift
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SIFT_WORKSPACE: ${{ github.workspace }}/target
+          SIFT_FEATURES: ${{ vars.SIFT_FEATURES }}
+          SIFT_AI_PROVIDER: azure
+          AZURE_OPENAI_RESOURCE_NAME: ${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          SIFT_MODEL: ${{ secrets.SIFT_MODEL }}
+          SIFT_JUDGE_MODEL: ${{ secrets.SIFT_JUDGE_MODEL }}
+          SIFT_API_URL: ${{ secrets.SIFT_API_URL }}          # optional: dashboard ingest
+          SIFT_INGEST_SECRET: ${{ secrets.SIFT_INGEST_SECRET }}
