@@ -363,3 +363,13 @@ Dashboard pages are read-only demo data. Real auth (GitHub OAuth) is future work
 | Benchmark | 10 PRs × 3 runs × 2–3 reviewers | `pnpm bench` (T-21) |
 
 CI never calls an LLM and has no provider secrets.
+
+## 10. GitHub App (post-hackathon, T-29 → T-35)
+
+- **Permissions:** pull requests: read & write · contents: read · issues: read & write (labels) · metadata: read. Nothing else.
+- **Events:** `pull_request`, `pull_request_review_comment` (feedback commands), `installation`, `installation_repositories`.
+- **Webhook:** `POST /api/github/webhook` on `apps/web`. Verify `X-Hub-Signature-256` (HMAC-SHA256 of the raw body with `GITHUB_APP_WEBHOOK_SECRET`) in constant time before parsing; dedupe on `X-GitHub-Delivery`; respond within 10 s, so the review itself runs in a queued worker.
+- **New env (Vercel only):** `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_WEBHOOK_SECRET`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`.
+- **Schema additions:** `Installation { id, githubInstallationId @unique, accountLogin, accountType, suspendedAt?, createdAt }`, and `Repo.installationId?` (null = Action-only repo).
+- **Tokens:** sign an App JWT (RS256, ≤10 min), exchange it for an installation token per job, and keep it in memory only.
+- **Limits:** per-installation review concurrency and a daily model-call budget, because the model bill is Sift's, not the repo owner's.

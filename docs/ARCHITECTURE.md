@@ -102,7 +102,7 @@ A separate repo, `sift-demo-shop`, holds the demo app and the 10 benchmark PRs.
 
 | # | Decision | Why | Trade-off |
 |---|---|---|---|
-| D1 | Run as a **GitHub Action**, not a hosted GitHub App | No server for the review runtime; `GITHUB_TOKEN` gives scoped permissions for free | One repo at a time; the App is "what's next" |
+| D1 | Run as a **GitHub Action**, not a hosted GitHub App | No server for the review runtime; `GITHUB_TOKEN` gives scoped permissions for free | One repo at a time (a workflow file per repo). The App is the planned second entry point, sharing the whole pipeline (§7) |
 | D2 | The Action **checks out the Sift repo and runs from source** (no committed `dist/`) | Avoids constant merge conflicts on generated bundles | ~30–60 s install per run; cached with pnpm |
 | D3 | **Vercel AI SDK** + zod `generateObject` | Provider-agnostic; typed output, invalid JSON rejected | Slight abstraction overhead |
 | D4 | **ts-morph** for impact analysis and conventions | Real "find references"; tree-sitter only gives syntax | TS/JS only |
@@ -121,3 +121,37 @@ A separate repo, `sift-demo-shop`, holds the demo app and the 10 benchmark PRs.
 | Reviews, findings, outcomes, stats | Postgres via `apps/web` | Dashboard, Telegram, buddy, Action (`/config`) |
 | Mined conventions | `.github/copilot-instructions.md` in the target repo | Sift, GitHub Copilot |
 | Benchmark truth | `benchmark/labels.json` | Benchmark runner |
+| (App, post-hackathon) Installations and their repos | Postgres via `apps/web`, fed by GitHub webhooks | Dashboard, review worker |
+
+## 7. Two entry points: GitHub Action now, GitHub App next
+
+Both entry points call the same `runPrReview()` from `@sift/core`. Only three things differ, and each is injected, never hard-coded in the pipeline (T-28):
+
+```mermaid
+flowchart LR
+  subgraph NOW["Now: GitHub Action (hackathon)"]
+    WF["pull_request event<br/>workflow in each repo"] --> ACT["apps/action"]
+  end
+  subgraph NEXT["Next: GitHub App (after Oct 8)"]
+    HOOK["webhook<br/>every installed repo"] --> WEBHOOK["apps/web<br/>/api/github/webhook"] --> Q["review queue"] --> WORKER["worker"]
+  end
+  ACT --> RUN["runPrReview()<br/>@sift/core"]
+  WORKER --> RUN
+  RUN --> GH["GitHub: one COMMENT review + risk label"]
+```
+
+| Injected piece | Action | App |
+|---|---|---|
+| GitHub token | the workflow's `GITHUB_TOKEN` | short-lived installation token from the App JWT |
+| `readFile(path)` | local checkout (`SIFT_WORKSPACE`) | contents API at `head.sha` (or a shallow clone for impact analysis) |
+| Trigger | the repo's workflow run | webhook → queue → worker |
+| Runs on | GitHub's runners | Sift's own worker |
+
+**Why the Action for the hackathon:** it is already built, needs no server runtime, and has the fewest live failure points on demo day.
+
+**Why the App next:** one install covers every selected repo, including repos created later, with no workflow file or secrets per repo. It enables "Sign in with GitHub" and a multi-repo dashboard, and fork PRs work because the token belongs to the base repo.
+
+**Rules that keep both working:**
+- `runPrReview` never reads env vars, the event file or the disk directly. Entry points pass everything in.
+- Both paths post only `COMMENT` reviews. The App's pull-request write permission could approve, so a test asserts it never does.
+- A repo using both gets one review per push (T-35).
