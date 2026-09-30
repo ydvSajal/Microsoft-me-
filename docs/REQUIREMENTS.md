@@ -85,4 +85,4 @@ Testable requirements with IDs, traced to the problem statement and to tickets. 
 | Editor | VS Code + Biome extension | — |
 | PlatformIO (buddy only, P3) | latest | `pio --version` |
 
-**Accounts:** GitHub (admin on `sift` and `sift-demo-shop`), Azure OpenAI or the chosen free model, Vercel, Neon or Supabase (Postgres), Telegram (BotFather) for T-25 (P3).
+**Accounts:** GitHub (admin on `sift` and `sift-demo-shop`), a Gemini API key (or OpenRouter), Vercel, Neon or Supabase (Postgres), Telegram (BotFather) for T-25 (P3).

@@ -1,0 +1,21 @@
+{
+  "name": "@sift/ai",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./mock": "./src/mock.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^4.0.87",
+    "@openrouter/ai-sdk-provider": "^3.1.0",
+    "@sift/shared": "workspace:*",
+    "ai": "^7.0.124",
+    "zod": "^4.6.5"
+  }
+}

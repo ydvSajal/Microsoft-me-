@@ -11,7 +11,7 @@ The implementation reference. Contracts in §2 are the source of truth; change t
 | Lint/format | Biome |
 | Tests | Vitest |
 | GitHub API | Octokit (`@octokit/rest` + GraphQL for review threads) |
-| AI | Vercel AI SDK (`ai`) + `@ai-sdk/azure` (swappable) + zod |
+| AI | Vercel AI SDK v7 (`ai`) + `@ai-sdk/google` and `@openrouter/ai-sdk-provider` (swappable via env) + zod |
 | Code analysis | ts-morph |
 | Web | Next.js App Router, shadcn/ui, Tailwind |
 | DB | PostgreSQL (Neon or Supabase) + Prisma |
@@ -276,7 +276,7 @@ Emit a rule only if the dominant option is ≥80% of ≥20 samples, e.g. `"Use n
 
 ## 5. AI layer (`packages/ai`)
 
-**Provider** (`provider.ts`): `getModel(role: "review" | "judge")` reads `SIFT_AI_PROVIDER`, `SIFT_MODEL`, `SIFT_JUDGE_MODEL` and the provider credentials. No other file imports a provider SDK.
+**Provider** (`provider.ts`): `getModel(role: "review" | "judge")` reads `SIFT_AI_PROVIDER` (`gemini` | `openrouter`), `SIFT_MODEL`, `SIFT_JUDGE_MODEL` (falls back to `SIFT_MODEL`) and that provider's API key. Providers are entries in one `PROVIDERS` map; adding one is one entry. No other file imports a provider SDK.
 
 **Review call** (`review.ts`):
 - One `generateObject` per file with schema `z.object({ whatChanged: z.string(), findings: z.array(ModelFinding) })`.

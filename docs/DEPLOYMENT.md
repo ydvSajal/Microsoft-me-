@@ -66,7 +66,7 @@ git reset --hard origin/main
 | Firmware | `firmware.yml` compiles and uploads `firmware.bin` as an artifact on `main`; flash locally | `firmware-build` |
 
 **Turning on self-review** (after T-10 works on the demo repo):
-1. Add the same model secrets to the **sift** repo: `AZURE_OPENAI_RESOURCE_NAME`, `AZURE_OPENAI_API_KEY`, `SIFT_MODEL`, `SIFT_JUDGE_MODEL`. Optionally add `SIFT_API_URL` + `SIFT_INGEST_SECRET` so the dashboard sees these reviews too.
+1. Add the same model secrets to the **sift** repo: `GOOGLE_GENERATIVE_AI_API_KEY` and/or `OPENROUTER_API_KEY`, `SIFT_MODEL`, `SIFT_JUDGE_MODEL`, plus the repo variable `SIFT_AI_PROVIDER` (`gemini` or `openrouter`). Optionally add `SIFT_API_URL` + `SIFT_INGEST_SECRET` so the dashboard sees these reviews too.
 2. `gh variable set SIFT_SELF_REVIEW --body true --repo <you>/sift`
 
 From then on, every PR you open gets reviewed by the version of Sift on `main`, never by the PR's own code. So a broken PR can't break its own reviewer.
@@ -74,7 +74,7 @@ From then on, every PR you open gets reviewed by the version of Sift on `main`, 
 ## 4. Running Sift on the demo repo (T-06)
 
 **In `sift-demo-shop`, add these repo secrets** (Settings → Secrets and variables → Actions):
-- `AZURE_OPENAI_RESOURCE_NAME`, `AZURE_OPENAI_API_KEY`, `SIFT_MODEL`, `SIFT_JUDGE_MODEL`
+- `GOOGLE_GENERATIVE_AI_API_KEY` and/or `OPENROUTER_API_KEY`, `SIFT_MODEL`, `SIFT_JUDGE_MODEL`
 - `SIFT_API_URL`: the Vercel URL, e.g. `https://sift-web.vercel.app`
 - `SIFT_INGEST_SECRET`: must match the web app
 
@@ -129,9 +129,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SIFT_WORKSPACE: ${{ github.workspace }}
           SIFT_FEATURES: ${{ vars.SIFT_FEATURES }}
-          SIFT_AI_PROVIDER: azure
-          AZURE_OPENAI_RESOURCE_NAME: ${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}
-          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          SIFT_AI_PROVIDER: ${{ vars.SIFT_AI_PROVIDER }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SIFT_MODEL: ${{ secrets.SIFT_MODEL }}
           SIFT_JUDGE_MODEL: ${{ secrets.SIFT_JUDGE_MODEL }}
           SIFT_API_URL: ${{ secrets.SIFT_API_URL }}
@@ -153,7 +153,7 @@ Notes:
 4. Environment variables (Production + Preview):
    - `DATABASE_URL`, `DIRECT_URL`
    - `SIFT_INGEST_SECRET`, `SIFT_DEMO_PASSCODE`
-   - `SIFT_AI_PROVIDER`, `AZURE_OPENAI_RESOURCE_NAME`, `AZURE_OPENAI_API_KEY`, `SIFT_MODEL`, `SIFT_JUDGE_MODEL` (for `/review`)
+   - `SIFT_AI_PROVIDER`, `GOOGLE_GENERATIVE_AI_API_KEY` / `OPENROUTER_API_KEY`, `SIFT_MODEL`, `SIFT_JUDGE_MODEL` (for `/review`)
    - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `WAIT_HOURS`
 5. Seed once from your machine, pointed at production: `pnpm --filter web db:seed`. This prints the device token and Telegram link tokens. Store them somewhere private.
 6. Every PR gets a **preview deployment**; every merge to `main` deploys **production**. `deploy-smoke.yml` then calls `GET /api/health` on the new URL and goes red if the app or DB is down.
@@ -197,9 +197,9 @@ The canonical list is in `.env.example`. Summary:
 
 | Variable | Used by | Purpose |
 |---|---|---|
-| `SIFT_AI_PROVIDER` | ai | `azure` (default) or another supported provider |
-| `AZURE_OPENAI_RESOURCE_NAME`, `AZURE_OPENAI_API_KEY` | ai | Provider credentials |
-| `SIFT_MODEL`, `SIFT_JUDGE_MODEL` | ai | Deployment/model names for review and judge |
+| `SIFT_AI_PROVIDER` | ai | `gemini` (default) or `openrouter`; add more in `packages/ai/src/provider.ts` |
+| `GOOGLE_GENERATIVE_AI_API_KEY`, `OPENROUTER_API_KEY` | ai | Provider credentials (only the selected provider's key is needed) |
+| `SIFT_MODEL`, `SIFT_JUDGE_MODEL` | ai | Model names for review and judge (judge falls back to `SIFT_MODEL`) |
 | `SIFT_FEATURES` | core | Comma list: `impact,stack,conventions,feedback` |
 | `SIFT_API_URL` | core | Web app base URL |
 | `SIFT_INGEST_SECRET` | core, web | Shared Bearer secret for ingest and config |

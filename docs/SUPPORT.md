@@ -33,7 +33,7 @@
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | Schema validation errors | Model returned extra/missing fields | Retry is built in; if frequent, tighten the prompt with an example, lower the temperature, check the model supports structured output |
-| `401` / `404` from the provider | Wrong resource name, key or deployment name | Verify `AZURE_OPENAI_RESOURCE_NAME`, `SIFT_MODEL` (the **deployment** name, not the model family) |
+| `401` / `404` from the provider | Wrong resource name, key or deployment name | Verify the key for the selected `SIFT_AI_PROVIDER` and that `SIFT_MODEL` is a model id that provider serves (e.g. `gemini-2.5-flash`) |
 | Rate limited (`429`) | Burst of parallel calls | Lower `LLM_CONCURRENCY` to 2; the retry uses backoff |
 | Findings feel generic or harsh | Tone rules not applied | Check `prompts/review.md` includes TRD §5; add 2 good + 1 bad example |
 | Findings on wrong lines | Hunk line numbers not passed to the model | Ensure each hunk line is prefixed with its RIGHT-side line number |
