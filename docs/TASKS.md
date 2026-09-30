@@ -16,7 +16,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 | ☑ | **T-01** | P0 | Repo bootstrap + CI/CD | `chore/t01-bootstrap` | pnpm workspaces (`apps/*`, `packages/*`), strict `tsconfig.base.json`, Biome, Vitest, root scripts (`format`, `format:check`, `lint`, `typecheck`, `test`, `check:boundaries`); all 5 workflows in `.github/workflows`; `setup-repo.sh` run; a test push to `main` is rejected; first PR shipped via `ship.sh` auto-merges |
 | ☑ | **T-02** | P0 | Shared contracts + fixtures | `feat/t02-contracts` | Every schema in TRD §2; 5 fixtures; a test parses each fixture |
 | ☑ | **T-03** | P0 | Provider layer | `feat/t03-provider` | `getModel("review" \| "judge")` via the AI SDK; provider and model come from env only; a mock provider for tests |
-| ☐ | **T-04** | P0 | Review call + tone rules | `feat/t04-review` | `reviewHunks()` with `generateObject` + `ModelFinding`; prompt follows TRD §5; retries once, then `[]` + error flag; mocked tests incl. malformed output |
+| ☑ | **T-04** | P0 | Review call + tone rules | `feat/t04-review` | `reviewHunks()` with `generateObject` + `ModelFinding`; prompt follows TRD §5; retries once, then `[]` + error flag; mocked tests incl. malformed output |
 | ☐ | **T-05** | P0 | CLI | `feat/t05-cli` | `pnpm sift review <file>` prints findings + summary; `--json` outputs a valid `ReviewResult` (mode `file`). **This is the mentor-round demo if your slot is today.** |
 
 ## Oct 2 — PR pipeline end to end (Gate 1)
