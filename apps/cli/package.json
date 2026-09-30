@@ -1,0 +1,15 @@
+{
+  "name": "@sift/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sift/ai": "workspace:*",
+    "@sift/shared": "workspace:*"
+  }
+}
