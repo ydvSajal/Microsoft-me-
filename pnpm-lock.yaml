@@ -51,6 +51,12 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
 
+  packages/core:
+    dependencies:
+      '@sift/shared':
+        specifier: workspace:*
+        version: link:../shared
+
   packages/shared:
     dependencies:
       zod:
