@@ -71,7 +71,9 @@ for (const rule of RULES) {
   if (!existsSync(dir)) continue; // package not created yet
   for (const file of walk(dir)) {
     for (const spec of importsOf(file)) {
-      if (!rule.check(spec)) violations.push(`${relative(ROOT, file)} imports "${spec}" — ${rule.why}`);
+      // Tests may import the test runner from any package.
+      if (spec !== "vitest" && !rule.check(spec))
+        violations.push(`${relative(ROOT, file)} imports "${spec}" — ${rule.why}`);
     }
   }
 }

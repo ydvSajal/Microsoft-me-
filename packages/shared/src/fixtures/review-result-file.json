@@ -1,0 +1,45 @@
+{
+  "mode": "file",
+  "requestedReviewers": [],
+  "riskTier": "high",
+  "whatChanged": "Checkout flow: totals the cart, logs, and charges the user.",
+  "inline": [
+    {
+      "fingerprint": "9bd99466492c",
+      "file": "src/checkout.ts",
+      "line": 40,
+      "severity": "critical",
+      "category": "bug",
+      "ruleKey": "missing-await",
+      "title": "`cart.getTotal()` now returns a Promise and isn't awaited",
+      "body": "`getTotal` became async in this PR, so `total` is a Promise here. `total <= 0` is always false, which means an empty cart can check out.",
+      "suggestion": "const total = await cart.getTotal();",
+      "quotedCode": "const total = cart.getTotal();",
+      "confidence": 0.93,
+      "alsoIn": []
+    }
+  ],
+  "summarized": [
+    {
+      "fingerprint": "8a33b1c63a08",
+      "file": "src/checkout.ts",
+      "line": 38,
+      "severity": "low",
+      "category": "naming",
+      "ruleKey": "unclear-name",
+      "title": "`d` doesn't say what the date is for",
+      "body": "`d` is only used as the checkout timestamp. A name like `checkedOutAt` makes the log line read on its own.",
+      "suggestion": "const checkedOutAt = new Date();",
+      "quotedCode": "const d = new Date();",
+      "confidence": 0.7,
+      "alsoIn": []
+    }
+  ],
+  "droppedCount": 0,
+  "impact": [],
+  "skippedFiles": [],
+  "stats": {
+    "llmCalls": 1,
+    "durationMs": 8120
+  }
+}

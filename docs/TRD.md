@@ -199,7 +199,7 @@ model Device {
 
 ## 4. Algorithms (`packages/core`)
 
-All thresholds live in `packages/core/src/config.ts` as named constants.
+All thresholds live in `packages/core/src/config.ts` as named constants. Exception: `SEVERITY_WEIGHT` lives in `@sift/shared` (`constants.ts`), because file mode (CLI, paste page) ranks findings too and may not import core; core re-exports it.
 
 ```ts
 export const MAX_INLINE = 7;
@@ -221,6 +221,8 @@ export const SKIP_PATTERNS = [/(^|\/)pnpm-lock\.yaml$/, /package-lock\.json$/, /
 - Output: `Map<string, Set<number>>`. Removed files and files with no `patch` (binary or too large) get an empty set.
 
 ### 4.2 Fingerprint and grouping (`dedupe/`)
+`normalize()` and `fingerprint()` live in `@sift/shared/fingerprint` (a separate entry so browser bundles never load `node:crypto`), because the CLI must emit fingerprints without importing core. Grouping and cross-push dedupe stay in `core/dedupe/`.
+
 - `normalize(code)` = trim each line, collapse runs of whitespace into single spaces, drop empty lines.
 - `fingerprint = sha1(category + ":" + ruleKey + ":" + normalize(quotedCode)).slice(0, 12)`.
 - **Group key:** `fingerprint` for critical/high/medium; `category + ":" + ruleKey` for low/nit. Keep the highest-scored finding of each group, and put the others in `alsoIn`.
