@@ -182,10 +182,10 @@ flowchart LR
 ## Quick start
 
 ```bash
-corepack enable
+npm install -g pnpm@11            # or: corepack enable (Node ≤ 24)
 pnpm install
-cp .env.example .env               # add model provider keys
-pnpm sift review path/to/file.ts
+cp .env.example .env               # set GOOGLE_GENERATIVE_AI_API_KEY (free: aistudio.google.com/apikey)
+pnpm sift review path/to/file.ts   # add --json for a machine-readable ReviewResult
 ```
 
 ## How work ships (solo)
