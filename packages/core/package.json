@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@sift/shared": "workspace:*"
+    "@octokit/rest": "^22.0.1",
+    "@sift/shared": "workspace:*",
+    "zod": "^4.6.5"
   }
 }

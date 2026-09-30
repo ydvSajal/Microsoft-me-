@@ -107,6 +107,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}   # PR line numbers refer to head, not the merge commit
           fetch-depth: 0                       # needed for patch-id + impact analysis
       - uses: actions/checkout@v4
         with:

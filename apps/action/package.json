@@ -1,0 +1,14 @@
+{
+  "name": "action",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@sift/core": "workspace:*",
+    "tsx": "^4.23.15"
+  }
+}

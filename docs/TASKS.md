@@ -25,7 +25,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 |---|---|---|---|---|---|
 | ☐ | **T-06** | P0 | Demo repo `sift-demo-shop` | *(other repo)* `feat/t06-shop` | ~15-file TS shop: `cart.ts`, `checkout.ts`, `auth.ts`, `api/refund.ts`; `sift.yml` from DEPLOYMENT §4 merged first; **then** protect `main` with 1 required approval (the human-approver proof), leaving "include administrators" off so you can still land setup changes; benchmark PRs stay open and are never merged |
 | ☑ | **T-07** | P0 | Diff map | `feat/t07-diff-map` | RIGHT-side added lines per file; renames, deletions, binary files, multi-hunk; ≥6 fixture tests |
-| ☐ | **T-08** | P0 | Action skeleton | `feat/t08-action` | Posts one `COMMENT` review with stub findings on valid lines, pinned to `commit_id`; skips drafts; fork PRs → log and exit 0 |
+| ☐ | **T-08** | P0 | Action skeleton *(code merged; live check pending: demo repo + key)* | `feat/t08-action` | Posts one `COMMENT` review with stub findings on valid lines, pinned to `commit_id`; skips drafts; fork PRs → log and exit 0 |
 | ☑ | **T-09** | P0 | Judge + quote check | `feat/t09-judge` | Drops findings whose `quotedCode` isn't in the file; judge re-scores confidence; judge failure keeps the original confidence |
 | ☐ | **T-10** | P0 | End-to-end wiring (**Gate 1**) | `feat/t10-e2e` | Real findings → grounding against the diff map → posted; off-diff findings go only to the summary; 0 GitHub 422s on 5 demo PRs. **Then set `SIFT_SELF_REVIEW=true`** |
 
