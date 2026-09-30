@@ -1,0 +1,26 @@
+{
+  "action": "synchronize",
+  "number": 12,
+  "pull_request": {
+    "number": 12,
+    "title": "make getTotal async",
+    "draft": false,
+    "user": { "login": "demo-author" },
+    "requested_reviewers": [{ "login": "senior-a" }, { "login": "senior-b" }],
+    "head": {
+      "sha": "3f9c2d1e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e",
+      "ref": "feat/async-total",
+      "repo": { "full_name": "ydvSajal/sift-demo-shop" }
+    },
+    "base": {
+      "sha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+      "ref": "main",
+      "repo": { "full_name": "ydvSajal/sift-demo-shop" }
+    }
+  },
+  "repository": {
+    "name": "sift-demo-shop",
+    "full_name": "ydvSajal/sift-demo-shop",
+    "owner": { "login": "ydvSajal" }
+  }
+}
