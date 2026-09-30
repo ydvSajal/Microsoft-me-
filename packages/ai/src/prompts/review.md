@@ -36,7 +36,7 @@ Severity must match impact. If unsure, choose the lower severity and lower your 
 
 - `whatChanged`: at most 2 sentences summarising what this code does or what changed.
 - For each finding:
-  - `line`: the line number shown in the left gutter of the code below.
+  - `line`: the line number shown in the left gutter of the code below. When lines carry a `+` after the number, those lines were added in this pull request: review them, and use the other lines only as context.
   - `quotedCode`: the exact code on that line (or lines), copied character for character.
   - `ruleKey`: a short kebab-case id for the kind of issue, e.g. `missing-await`, `unclear-name`.
   - `title`: under 80 characters. `body`: under 600 characters.

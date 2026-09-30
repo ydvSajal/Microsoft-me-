@@ -65,6 +65,9 @@ importers:
       '@octokit/rest':
         specifier: ^22.0.1
         version: 22.0.1
+      '@sift/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@sift/shared':
         specifier: workspace:*
         version: link:../shared

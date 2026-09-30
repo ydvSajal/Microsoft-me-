@@ -17,8 +17,12 @@ try {
     const { owner, name } = { owner: event.repository.owner.login, name: event.repository.name };
     const gh = createGitHub(required("GITHUB_TOKEN"), owner, name);
     const workspace = process.env.SIFT_WORKSPACE ?? process.cwd();
-    const summary = await runPrReview({ event, workspace }, { gh });
-    console.log(`Sift: reviewed PR #${event.pull_request.number}`, summary);
+    const r = await runPrReview({ event, workspace }, { gh });
+    console.log(
+      `Sift: reviewed PR #${r.prNumber}: risk ${r.riskTier}, ${r.inline.length} inline, ` +
+        `${r.summarized.length} in summary, ${r.droppedCount} dropped, ${r.skippedFiles.length} files skipped, ` +
+        `${r.stats.llmCalls} LLM calls, ${r.stats.durationMs} ms`,
+    );
   }
 } catch (err) {
   console.log(`::error::Sift failed: ${err instanceof Error ? err.message : String(err)}`);

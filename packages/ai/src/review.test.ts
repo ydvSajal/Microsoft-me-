@@ -106,4 +106,10 @@ describe("renderHunks", () => {
       ]),
     ).toBe(" 9 | a\n10 | b\n...\n99 | c");
   });
+
+  it("marks added lines with + in PR mode", () => {
+    expect(renderHunks([{ startLine: 9, lines: ["a", "b", "c"], added: [10] }])).toBe(
+      " 9  | a\n10+ | b\n11  | c",
+    );
+  });
 });
