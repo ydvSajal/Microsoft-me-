@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
+    "@sift/ai": "workspace:*",
     "@sift/shared": "workspace:*",
     "zod": "^4.6.5"
   }

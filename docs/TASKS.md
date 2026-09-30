@@ -27,7 +27,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 | ☑ | **T-07** | P0 | Diff map | `feat/t07-diff-map` | RIGHT-side added lines per file; renames, deletions, binary files, multi-hunk; ≥6 fixture tests |
 | ☐ | **T-08** | P0 | Action skeleton *(code merged; live check pending: demo repo + key)* | `feat/t08-action` | Posts one `COMMENT` review with stub findings on valid lines, pinned to `commit_id`; skips drafts; fork PRs → log and exit 0 |
 | ☑ | **T-09** | P0 | Judge + quote check | `feat/t09-judge` | Drops findings whose `quotedCode` isn't in the file; judge re-scores confidence; judge failure keeps the original confidence |
-| ☐ | **T-10** | P0 | End-to-end wiring (**Gate 1**) | `feat/t10-e2e` | Real findings → grounding against the diff map → posted; off-diff findings go only to the summary; 0 GitHub 422s on 5 demo PRs. **Then set `SIFT_SELF_REVIEW=true`** |
+| ☐ | **T-10** | P0 | End-to-end wiring (**Gate 1**) *(code merged; live check pending: demo repo + key)* | `feat/t10-e2e` | Real findings → grounding against the diff map → posted; off-diff findings go only to the summary; 0 GitHub 422s on 5 demo PRs. **Then set `SIFT_SELF_REVIEW=true`** |
 
 ## Oct 3 — ranking, dedupe, risk (Gate 2)
 

@@ -8,7 +8,12 @@ import { getModel } from "./provider";
 const INSTRUCTIONS = readFileSync(new URL("./prompts/review.md", import.meta.url), "utf8");
 
 /** A run of consecutive lines from the new version of the file, starting at `startLine` (1-based). */
-export type Hunk = { startLine: number; lines: readonly string[] };
+export type Hunk = {
+  startLine: number;
+  lines: readonly string[];
+  /** PR mode: line numbers added by the PR. They're marked `+` so the model focuses on them. */
+  added?: readonly number[];
+};
 
 export type ReviewInput = {
   file: string;
@@ -70,7 +75,16 @@ export function renderHunks(hunks: readonly Hunk[]): string {
   const last = Math.max(1, ...hunks.map((h) => h.startLine + h.lines.length - 1));
   const width = String(last).length;
   return hunks
-    .map((h) => h.lines.map((line, i) => `${String(h.startLine + i).padStart(width)} | ${line}`).join("\n"))
+    .map((h) => {
+      const added = h.added ? new Set(h.added) : null;
+      return h.lines
+        .map((line, i) => {
+          const n = h.startLine + i;
+          const mark = added ? (added.has(n) ? "+" : " ") : "";
+          return `${String(n).padStart(width)}${mark} | ${line}`;
+        })
+        .join("\n");
+    })
     .join("\n...\n");
 }
 
