@@ -7,7 +7,7 @@ flowchart LR
   Dev[PR author] -->|opens / pushes PR| GH[(GitHub repo)]
   GH -->|pull_request event| ACT[Sift Action<br/>apps/action + packages/core]
   ACT -->|reviewHunks| AI[packages/ai]
-  AI -->|AI SDK| LLM[(Azure OpenAI / free model)]
+  AI -->|AI SDK| LLM[(Gemini / OpenRouter)]
   ACT -->|COMMENT review + risk label| GH
   ACT -->|HTTPS ingest| WEB[apps/web<br/>Next.js API + dashboard]
   WEB --> DB[(Postgres)]

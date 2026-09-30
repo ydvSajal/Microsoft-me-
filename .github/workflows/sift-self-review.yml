@@ -52,9 +52,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SIFT_WORKSPACE: ${{ github.workspace }}/target
           SIFT_FEATURES: ${{ vars.SIFT_FEATURES }}
-          SIFT_AI_PROVIDER: azure
-          AZURE_OPENAI_RESOURCE_NAME: ${{ secrets.AZURE_OPENAI_RESOURCE_NAME }}
-          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          SIFT_AI_PROVIDER: ${{ vars.SIFT_AI_PROVIDER }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SIFT_MODEL: ${{ secrets.SIFT_MODEL }}
           SIFT_JUDGE_MODEL: ${{ secrets.SIFT_JUDGE_MODEL }}
           SIFT_API_URL: ${{ secrets.SIFT_API_URL }}          # optional: dashboard ingest

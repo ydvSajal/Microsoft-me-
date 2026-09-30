@@ -40,7 +40,7 @@ flowchart TB
   end
 
   DB[("Postgres<br/>Neon or Supabase")]
-  LLM[("Azure OpenAI<br/>review model + judge model")]
+  LLM[("Gemini or OpenRouter<br/>review model + judge model")]
   TG["Telegram bot, P3"]
   BUDDY["ESP32-S3 desk buddy, P3"]
 
@@ -62,7 +62,7 @@ flowchart TB
 | `apps/action` + `packages/core` + `packages/ai` | GitHub Actions runner (Ubuntu), started per PR event | Nothing to deploy: the target repo's workflow checks out `sift@main` on every run | The review pipeline, GitHub comments and labels |
 | `apps/web` | Vercel (serverless Next.js) | Vercel Git integration: preview per PR, production per merge to `main` | The database, dashboard, `/review` page, all API routes |
 | Postgres | Neon or Supabase | `prisma migrate deploy` inside the Vercel build | Reviews, findings, outcomes, per-category precision |
-| Model | Azure OpenAI (swappable via env) | Configured by env vars only | Nothing: stateless |
+| Model | Gemini or OpenRouter (swappable via env) | Configured by env vars only | Nothing: stateless |
 | `apps/cli` | Your laptop | Run from the repo with `pnpm sift` | Nothing: prints to the terminal |
 | Buddy firmware (P3) | ESP32-S3 on your desk | `pio run -t upload` over USB | Nothing: renders the mood the server sends |
 

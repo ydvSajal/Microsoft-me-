@@ -44,7 +44,7 @@ const RULES = [
 
 // Provider SDKs are allowed in exactly one file.
 const PROVIDER_FILE = "packages/ai/src/provider.ts";
-const PROVIDER_SDK = /^@ai-sdk\//;
+const PROVIDER_SDK = /^(@ai-sdk|@openrouter)\//;
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {

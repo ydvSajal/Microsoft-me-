@@ -36,6 +36,7 @@ create_label "sift:risk-low"    "2da44e" "Set by Sift"
 echo "==> Repo variables"
 gh variable set SIFT_SELF_REVIEW --body "false" --repo "$REPO"
 gh variable set SIFT_FEATURES --body "impact,stack,feedback" --repo "$REPO"
+gh variable set SIFT_AI_PROVIDER --body "gemini" --repo "$REPO"
 
 echo "==> Branch protection on $BRANCH: PR required (0 approvals), checks required (non-strict), admins included"
 gh api -X PUT "repos/$REPO/branches/$BRANCH/protection" \

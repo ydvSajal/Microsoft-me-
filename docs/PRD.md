@@ -102,7 +102,7 @@ Method: `benchmark/labels.json` is committed before any run; every reviewer runs
 | Question | Resolve by | Blocking? |
 |---|---|---|
 | Is pre-building allowed before Oct 7? Ask at the mentor round. | Oct 1 | Yes |
-| Model access: Azure OpenAI credits, or which free model? | Oct 1 (T-03) | Yes |
+| ~~Model access~~ Resolved: Gemini first, OpenRouter free tier as a second provider | Oct 1 (T-03) | No |
 | Copilot code review available as a baseline? Otherwise the naive single-pass LLM is the only baseline | Oct 4 | No |
 | Stacked PRs enabled on the demo account? Otherwise manual stacks | Oct 4 (T-15) | No |
 
