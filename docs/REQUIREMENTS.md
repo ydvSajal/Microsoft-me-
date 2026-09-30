@@ -79,7 +79,7 @@ Testable requirements with IDs, traced to the problem statement and to tickets. 
 | Tool | Version | Check |
 |---|---|---|
 | Node.js | 22 LTS | `node -v` |
-| pnpm | 10.x (pinned via `packageManager`) | `corepack enable && pnpm -v` |
+| pnpm | 11.x (pinned via `packageManager`) | `pnpm -v` |
 | Git | ≥ 2.40 | `git --version` |
 | GitHub CLI | latest | `gh auth status` |
 | Editor | VS Code + Biome extension | — |

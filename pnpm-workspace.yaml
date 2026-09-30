@@ -1,0 +1,22 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# pnpm 11 blocks dependency build scripts unless allowed here.
+allowBuilds:
+  esbuild: true
+
+# Published inside pnpm's minimum-release-age window; exempted explicitly.
+minimumReleaseAgeExclude:
+  - "@biomejs/biome@2.5.15"
+  - "@biomejs/cli-darwin-arm64@2.5.15"
+  - "@biomejs/cli-darwin-x64@2.5.15"
+  - "@biomejs/cli-linux-arm64-musl@2.5.15"
+  - "@biomejs/cli-linux-arm64@2.5.15"
+  - "@biomejs/cli-linux-x64-musl@2.5.15"
+  - "@biomejs/cli-linux-x64@2.5.15"
+  - "@biomejs/cli-win32-arm64@2.5.15"
+  - "@biomejs/cli-win32-x64@2.5.15"
+  - "@vitest/mocker@5.0.3"
+  - "@vitest/spy@5.0.3"
+  - "vitest@5.0.3"

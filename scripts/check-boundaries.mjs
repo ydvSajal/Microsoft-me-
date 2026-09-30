@@ -21,7 +21,8 @@ const RULES = [
   },
   {
     dir: "packages/ai",
-    check: (spec) => !/^@sift\/core(\/|$)/.test(spec) && !/^@octokit\//.test(spec) && !/^@prisma\//.test(spec),
+    check: (spec) =>
+      !/^@sift\/core(\/|$)/.test(spec) && !/^@octokit\//.test(spec) && !/^@prisma\//.test(spec),
     why: "@sift/ai must not import the pipeline, GitHub or the DB",
   },
   {
@@ -82,7 +83,8 @@ for (const top of ["packages", "apps"]) {
     const rel = relative(ROOT, file).split("\\").join("/");
     if (rel === PROVIDER_FILE) continue;
     for (const spec of importsOf(file)) {
-      if (PROVIDER_SDK.test(spec)) violations.push(`${rel} imports "${spec}" — provider SDKs belong only in ${PROVIDER_FILE}`);
+      if (PROVIDER_SDK.test(spec))
+        violations.push(`${rel} imports "${spec}" — provider SDKs belong only in ${PROVIDER_FILE}`);
     }
   }
 }
