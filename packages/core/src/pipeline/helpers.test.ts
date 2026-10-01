@@ -1,9 +1,7 @@
-import type { TFinding, TReviewResult } from "@sift/shared";
 import { describe, expect, it } from "vitest";
 import { MAX_FILES } from "../config";
 import { contextHunks, snippet } from "./context";
 import { mapLimit } from "./map-limit";
-import { fpMarker, inlineBody, summaryBody } from "./render";
 import { selectFiles } from "./select-files";
 
 describe("mapLimit", () => {
@@ -96,60 +94,5 @@ describe("contextHunks", () => {
 
   it("snippet numbers the lines around a finding", () => {
     expect(snippet(["a", "b", "c", "d"], 2, 1)).toBe("1 | a\n2 | b\n3 | c");
-  });
-});
-
-describe("render", () => {
-  const finding: TFinding = {
-    fingerprint: "9bd99466492c",
-    file: "src/checkout.ts",
-    line: 6,
-    severity: "critical",
-    category: "bug",
-    ruleKey: "missing-await",
-    title: "Not awaited",
-    body: "Explained.",
-    suggestion: "await x;",
-    quotedCode: "x;",
-    confidence: 0.9,
-    alsoIn: [],
-  };
-  const result = (over: Partial<TReviewResult> = {}): TReviewResult => ({
-    mode: "pr",
-    requestedReviewers: [],
-    riskTier: "high",
-    whatChanged: "Changed things.",
-    inline: [finding],
-    summarized: [],
-    droppedCount: 0,
-    impact: [],
-    skippedFiles: [],
-    stats: { llmCalls: 1, durationMs: 1 },
-    ...over,
-  });
-
-  it("ends every inline comment with its fingerprint marker (dedupe across pushes)", () => {
-    const body = inlineBody(finding);
-    expect(body.endsWith(fpMarker("9bd99466492c"))).toBe(true);
-    expect(body).toContain("**CRITICAL · bug**: Not awaited");
-    expect(body).toContain("```ts\nawait x;\n```");
-  });
-
-  it("omits the fix block when there's no suggestion", () => {
-    expect(inlineBody({ ...finding, suggestion: undefined })).not.toContain("```");
-  });
-
-  it("summary states the risk, counts and the human-approver note", () => {
-    const body = summaryBody(result());
-    expect(body).toContain("risk: **HIGH**");
-    expect(body).toContain("1 inline comment(s)");
-    expect(body).toContain("A human reviewer approves.");
-    expect(body).not.toContain("#### Top findings");
-  });
-
-  it("summary can list inline findings (422 fallback)", () => {
-    expect(summaryBody(result(), true)).toContain(
-      "#### Top findings\n- `src/checkout.ts:6` **critical** Not awaited",
-    );
   });
 });

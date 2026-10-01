@@ -160,7 +160,7 @@ describe("runPrReview end to end (fake GitHub + mock models)", () => {
   it("moves real off-diff findings and nits to the summary, ranked", async () => {
     const { result, reviews } = await run({});
     expect(result.summarized.map((x) => x.ruleKey)).toEqual(["unhandled-charge", "log-format"]);
-    expect(reviews[0]?.body).toContain("`src/checkout.ts:9` **medium** `charge` failure isn't handled");
+    expect(reviews[0]?.body).toContain("`src/checkout.ts:9` — `charge` failure isn't handled");
     expect(reviews[0]?.body).toContain("Log format nit");
   });
 

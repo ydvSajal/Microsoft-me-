@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
 import { resolve, sep } from "node:path";
 import { judge, type LanguageModel, reviewHunks } from "@sift/ai";
-import { riskFromSeverities, ReviewResult, type TFinding, type TReviewResult } from "@sift/shared";
+import {
+  renderInline,
+  renderSummary,
+  ReviewResult,
+  riskFromSeverities,
+  type TFinding,
+  type TReviewResult,
+} from "@sift/shared";
 import { fingerprint } from "@sift/shared/fingerprint";
 import { LLM_CONCURRENCY, MAX_INLINE, MIN_CONFIDENCE, SEVERITY_WEIGHT } from "../config";
 import { buildDiffMap } from "../diff/diff-map";
@@ -11,7 +18,6 @@ import { groundFinding, type Placement } from "../validate/grounding";
 import { contextHunks, snippet } from "./context";
 import type { TPrEvent } from "./event";
 import { mapLimit } from "./map-limit";
-import { inlineBody, summaryBody } from "./render";
 import { type SkippedFile, selectFiles } from "./select-files";
 
 export type RunContext = { event: TPrEvent; workspace: string };
@@ -157,14 +163,18 @@ async function postReview(gh: GitHub, prNumber: number, commitId: string, r: TRe
   const review: NewReview = {
     commit_id: commitId,
     event: "COMMENT",
-    body: summaryBody(r),
-    comments: r.inline.map((f) => ({ path: f.file, line: f.line, side: "RIGHT", body: inlineBody(f) })),
+    body: renderSummary(r),
+    comments: r.inline.map((f) => ({ path: f.file, line: f.line, side: "RIGHT", body: renderInline(f) })),
   };
   try {
     await gh.createReview(prNumber, review);
   } catch (err) {
     if ((err as { status?: number }).status !== 422 || review.comments.length === 0) throw err;
     console.log(`::warning::GitHub rejected inline comments (422); posting them in the summary instead.`);
-    await gh.createReview(prNumber, { ...review, body: summaryBody(r, true), comments: [] });
+    await gh.createReview(prNumber, {
+      ...review,
+      body: renderSummary(r, { includeInline: true }),
+      comments: [],
+    });
   }
 }
