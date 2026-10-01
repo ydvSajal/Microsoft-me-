@@ -44,7 +44,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 | ✓ | ID | Pri | Ticket | Branch | Acceptance criteria |
 |---|---|---|---|---|---|
 | ☐ | **T-15** | P1 | Stack awareness | `feat/t15-stack` | Base-ref chain detection; unchanged layer (patch-id) → 0 LLM calls; stack-scoped fingerprints; stack risk map in the summary; flag `stack` |
-| ☐ | **T-16** | P1 | Impact analysis | `feat/t16-impact` | ts-morph references to changed exports outside the diff → LLM context + summary list; flag `impact` |
+| ☑ | **T-16** | P1 | Impact analysis | `feat/t16-impact` | ts-morph references to changed exports outside the diff → LLM context + summary list; flag `impact` |
 | ☐ | **T-17** | P0 | Benchmark PRs (10) | `test/t17-bench-set` | On `sift-demo-shop`: 5 seeded-bug PRs, 3 clean refactors (expect 0 comments), 1 nit-heavy PR, 1 three-layer stack with a cross-layer bug; `benchmark/labels.json` merged **before** any run |
 
 ## Oct 5 — web, feedback, numbers (Gate 3: freeze at EOD)

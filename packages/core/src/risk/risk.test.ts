@@ -37,6 +37,11 @@ describe("riskTier", () => {
     expect(riskTier([], [file("src/a.ts", LARGE_PR_LINES)])).toBe("low");
   });
 
+  it("a changed signature with outside callers is high; otherwise impact alone changes nothing", () => {
+    expect(riskTier([], small, true)).toBe("high");
+    expect(riskTier([], small, false)).toBe("low");
+  });
+
   it("sensitivity beats size and a lone nit stays low", () => {
     expect(riskTier(["nit"], [file("src/auth.ts", LARGE_PR_LINES + 1)])).toBe("high");
     expect(riskTier(["nit"], small)).toBe("low");

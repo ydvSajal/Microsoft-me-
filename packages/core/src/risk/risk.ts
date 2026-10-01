@@ -18,14 +18,18 @@ export function changedLines(files: readonly PrFile[]): number {
 }
 
 /**
- * Risk tier (TRD §4.4). high: a critical/high finding or a sensitive path touched; medium: a medium
- * finding or a large PR; else low.
- * ponytail: the "exported signature changed with external callers" rule waits for impact analysis (T-16).
+ * Risk tier (TRD §4.4). high: a critical/high finding, a sensitive path touched, or an exported
+ * signature changed that has callers outside the diff (`breakingImpact`); medium: a medium finding
+ * or a large PR; else low.
  */
-export function riskTier(severities: readonly TSeverity[], files: readonly PrFile[]): TRiskTier {
+export function riskTier(
+  severities: readonly TSeverity[],
+  files: readonly PrFile[],
+  breakingImpact = false,
+): TRiskTier {
   const bySeverity = riskFromSeverities(severities);
-  if (bySeverity === "high" || files.some((f) => SENSITIVE_PATHS.some((p) => p.test(f.filename))))
-    return "high";
+  const sensitive = files.some((f) => SENSITIVE_PATHS.some((p) => p.test(f.filename)));
+  if (bySeverity === "high" || sensitive || breakingImpact) return "high";
   if (bySeverity === "medium" || changedLines(files) > LARGE_PR_LINES) return "medium";
   return "low";
 }
