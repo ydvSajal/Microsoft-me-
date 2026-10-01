@@ -10,11 +10,12 @@ import {
   type TReviewResult,
 } from "@sift/shared";
 import { fingerprint } from "@sift/shared/fingerprint";
-import { LLM_CONCURRENCY, MAX_INLINE, MIN_CONFIDENCE, SEVERITY_WEIGHT } from "../config";
+import { LLM_CONCURRENCY } from "../config";
 import { buildDiffMap } from "../diff/diff-map";
 import { parsePatch } from "../diff/parse-patch";
 import type { GitHub, NewReview } from "../github/client";
-import { groundFinding, type Placement } from "../validate/grounding";
+import { type Candidate, rank } from "../rank/rank";
+import { groundFinding } from "../validate/grounding";
 import { contextHunks, snippet } from "./context";
 import type { TPrEvent } from "./event";
 import { mapLimit } from "./map-limit";
@@ -28,7 +29,6 @@ export type RunDeps = {
   judgeModel?: LanguageModel;
 };
 
-type Candidate = { finding: TFinding; placement: Placement };
 const WHAT_CHANGED_MAX = 400; // ReviewResult.whatChanged limit
 
 /** Reads a changed file from the checkout, refusing paths that escape it. */
@@ -44,12 +44,6 @@ function readWorkspaceFile(workspace: string, file: string): string[] | null {
     return null;
   }
 }
-
-const score = (f: TFinding) => SEVERITY_WEIGHT[f.severity] * f.confidence;
-const byScore = (a: Candidate, b: Candidate) =>
-  score(b.finding) - score(a.finding) ||
-  a.finding.file.localeCompare(b.finding.file) ||
-  a.finding.line - b.finding.line;
 
 /**
  * The PR review pipeline (ARCHITECTURE §2): select files → diff map → one model call per file
@@ -115,20 +109,14 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
     if (s !== undefined) c.finding.confidence = s;
   }
 
-  // 4. Confidence floor, one copy per fingerprint, rank, inline budget.
+  // 4. One copy per fingerprint, then confidence floor, rank and inline budget.
   const seen = new Set<string>();
-  const kept = candidates
-    .filter((c) => c.finding.confidence >= MIN_CONFIDENCE)
-    .sort(byScore)
-    .filter((c) => !seen.has(c.finding.fingerprint) && seen.add(c.finding.fingerprint));
-  dropped += candidates.length - kept.length;
-
-  const inline: TFinding[] = [];
-  const summarized: TFinding[] = [];
-  for (const c of kept) {
-    const fits = c.placement === "inline" && c.finding.severity !== "nit" && inline.length < MAX_INLINE;
-    (fits ? inline : summarized).push(c.finding);
-  }
+  const unique = candidates.filter(
+    (c) => !seen.has(c.finding.fingerprint) && seen.add(c.finding.fingerprint),
+  );
+  const ranked = rank(unique);
+  dropped += candidates.length - unique.length + ranked.dropped;
+  const { inline, summarized } = ranked;
 
   const result = ReviewResult.parse({
     mode: "pr",
@@ -138,7 +126,7 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
     author: pr.user.login,
     requestedReviewers: pr.requested_reviewers.map((r) => r.login),
     headSha: pr.head.sha,
-    riskTier: riskFromSeverities(kept.map((c) => c.finding.severity)),
+    riskTier: riskFromSeverities([...inline, ...summarized].map((f) => f.severity)),
     whatChanged: perFile
       .flatMap((r) => (r?.out.whatChanged ? [r.out.whatChanged] : []))
       .join(" ")
