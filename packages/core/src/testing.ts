@@ -10,12 +10,22 @@ export function loadFixture(name: string): unknown {
 
 export const prEvent = (): TPrEvent => PrEvent.parse(loadFixture("pr-event.json"));
 
-/** In-memory GitHub: serves `files`, records every review. `failReviews` makes the first N posts throw. */
-export function fakeGitHub(files: PrFile[], opts: { failReviews?: { times: number; status: number } } = {}) {
+/**
+ * In-memory GitHub: serves `files`, records every review. `failReviews` makes the first N posts throw.
+ * `posted` seeds bodies from earlier pushes; reviews posted through the fake are listed back too.
+ */
+export function fakeGitHub(
+  files: PrFile[],
+  opts: { failReviews?: { times: number; status: number }; posted?: string[] } = {},
+) {
   const reviews: NewReview[] = [];
   let failures = opts.failReviews?.times ?? 0;
   const gh: GitHub = {
     listFiles: async () => files,
+    listPostedBodies: async () => [
+      ...(opts.posted ?? []),
+      ...reviews.flatMap((r) => [r.body, ...r.comments.map((c) => c.body)]),
+    ],
     createReview: async (_pr, review) => {
       if (failures > 0) {
         failures--;

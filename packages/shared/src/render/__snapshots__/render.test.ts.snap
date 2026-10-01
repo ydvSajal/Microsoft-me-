@@ -21,11 +21,11 @@ Makes \`Cart.getTotal\` async and adds \`Cart.count\`. Checkout logs a timestamp
 **2 inline comments** · 2 more below
 
 #### Also worth a look
-- 🔵 Low \`src/checkout.ts:38\` — \`d\` doesn't say what the date is for (also in \`src/cart.ts:22\`)
+- 🔵 Low \`src/checkout.ts:38\` — \`d\` doesn't say what the date is for (also in \`src/cart.ts:22\`) <!-- sift:fp=8a33b1c63a08 -->
 
 <details><summary>1 nit</summary>
 
-- ⚪ Nit \`src/auth.ts:3\` — Single quotes in a double-quoted codebase
+- ⚪ Nit \`src/auth.ts:3\` — Single quotes in a double-quoted codebase <!-- sift:fp=ce5214f369d0 -->
 
 </details>
 
@@ -50,7 +50,7 @@ Checkout flow: totals the cart, logs, and charges the user.
 **1 inline comment** · 1 more below
 
 #### Also worth a look
-- 🔵 Low \`src/checkout.ts:38\` — \`d\` doesn't say what the date is for
+- 🔵 Low \`src/checkout.ts:38\` — \`d\` doesn't say what the date is for <!-- sift:fp=8a33b1c63a08 -->
 
 <sub>Sift only comments; a human reviewer approves. 1 model call · 8.1 s</sub>"
 `;

@@ -1,6 +1,6 @@
 // GitHub-flavoured markdown for the review body (the summary comment).
 import type { TFinding, TReviewResult } from "../schemas";
-import { clean, RISK_BADGE, SEVERITY_BADGE, where } from "./inline";
+import { clean, fpMarker, RISK_BADGE, SEVERITY_BADGE, where } from "./inline";
 
 export type SummaryOptions = {
   /** Also list the inline findings (used when GitHub rejected the inline comments). */
@@ -13,7 +13,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 function bullet(f: TFinding): string {
   const also = f.alsoIn.length > 0 ? ` (also in ${f.alsoIn.map(where).join(", ")})` : "";
-  return `- ${SEVERITY_BADGE[f.severity]} ${where(f)} — ${clean(f.title)}${also}`;
+  return `- ${SEVERITY_BADGE[f.severity]} ${where(f)} — ${clean(f.title)}${also} ${fpMarker(f.fingerprint)}`;
 }
 
 const details = (summary: string, lines: string[]) => [

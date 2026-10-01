@@ -14,6 +14,8 @@ import { LLM_CONCURRENCY } from "../config";
 import { buildDiffMap } from "../diff/diff-map";
 import { parsePatch } from "../diff/parse-patch";
 import type { GitHub, NewReview } from "../github/client";
+import { groupFindings } from "../dedupe/group";
+import { dropPosted, postedFingerprints } from "../dedupe/posted";
 import { type Candidate, rank } from "../rank/rank";
 import { groundFinding } from "../validate/grounding";
 import { contextHunks, snippet } from "./context";
@@ -109,14 +111,13 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
     if (s !== undefined) c.finding.confidence = s;
   }
 
-  // 4. One copy per fingerprint, then confidence floor, rank and inline budget.
-  const seen = new Set<string>();
-  const unique = candidates.filter(
-    (c) => !seen.has(c.finding.fingerprint) && seen.add(c.finding.fingerprint),
+  // 4. Fold duplicates, skip what an earlier push already posted, then floor, rank and budget.
+  const { fresh, repeats } = dropPosted(
+    groupFindings(candidates),
+    postedFingerprints(await deps.gh.listPostedBodies(pr.number)),
   );
-  const ranked = rank(unique);
-  dropped += candidates.length - unique.length + ranked.dropped;
-  const { inline, summarized } = ranked;
+  const { inline, summarized, dropped: underFloor } = rank(fresh);
+  dropped += underFloor;
 
   const result = ReviewResult.parse({
     mode: "pr",
@@ -138,7 +139,12 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
     stats: { llmCalls, durationMs: Math.round(performance.now() - started) },
   });
 
-  await postReview(deps.gh, pr.number, pr.head.sha, result);
+  // A re-push with nothing new would only add a "nothing to flag" comment on top of the old review.
+  if (repeats > 0 && inline.length === 0 && summarized.length === 0) {
+    console.log(`Sift: ${repeats} finding(s) already posted on this PR, nothing new to comment.`);
+  } else {
+    await postReview(deps.gh, pr.number, pr.head.sha, result);
+  }
   return result;
 }
 
