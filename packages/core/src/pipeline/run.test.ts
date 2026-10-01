@@ -320,6 +320,50 @@ describe("re-push (dedupe across pushes)", () => {
   });
 });
 
+describe("risk label", () => {
+  const stale = ["sift:risk-low", "sift:risk-medium", "bug"];
+  const labelled = (opts: { labels?: string[]; failLabels?: boolean }, review = reviewJson([onDiffBug])) => {
+    const { gh, labels } = fakeGitHub(prFiles, opts);
+    const ws = workspace({ "src/checkout.ts": CHECKOUT, "src/broken.ts": ["a", "b"] });
+    const reviewModel = reviewModelByFile({ "src/checkout.ts": review });
+    const judgeModel = mockModel([judgeJson([[onDiffBug, 0.95]])]);
+    const result = runPrReview({ event: prEvent(), workspace: ws }, { gh, reviewModel, judgeModel });
+    return { result, labels, gh, ws, reviewModel };
+  };
+
+  it("sets exactly one sift:risk-* label, removes the stale ones, leaves others alone", async () => {
+    const { result, labels } = labelled({ labels: stale });
+    expect((await result).riskTier).toBe("high");
+    expect([...labels].sort()).toEqual(["bug", "sift:risk-high"]);
+  });
+
+  it("moves the label down when a later push has no findings", async () => {
+    const { result, labels } = labelled({ labels: ["sift:risk-high"] }, reviewJson([]));
+    expect((await result).riskTier).toBe("low");
+    expect([...labels]).toEqual(["sift:risk-low"]);
+  });
+
+  it("keeps the label high on a re-push whose findings were all posted before", async () => {
+    const { gh, ws, result: first } = labelled({});
+    await first;
+    const second = await runPrReview(
+      { event: prEvent(), workspace: ws },
+      {
+        gh,
+        reviewModel: reviewModelByFile({ "src/checkout.ts": reviewJson([onDiffBug]) }),
+        judgeModel: mockModel([judgeJson([[onDiffBug, 0.95]])]),
+      },
+    );
+    expect(second.inline).toEqual([]);
+    expect(second.riskTier).toBe("high");
+  });
+
+  it("a label failure doesn't fail the review", async () => {
+    const { result } = labelled({ failLabels: true });
+    await expect(result).resolves.toMatchObject({ riskTier: "high" });
+  });
+});
+
 describe("posting fallback", () => {
   it("reposts everything in the summary if GitHub rejects an inline line (422)", async () => {
     const { reviews } = await run({ failReviews: { times: 1, status: 422 } });
