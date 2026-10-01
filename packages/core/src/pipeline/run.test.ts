@@ -320,6 +320,35 @@ describe("re-push (dedupe across pushes)", () => {
   });
 });
 
+describe("readFile seam (no filesystem)", () => {
+  it("reviews from an in-memory reader, with no workspace", async () => {
+    const { gh, reviews } = fakeGitHub(prFiles);
+    const reads: string[] = [];
+    const result = await runPrReview(
+      { event: prEvent() },
+      {
+        gh,
+        readFile: async (path) => {
+          reads.push(path);
+          return path === "src/checkout.ts" ? CHECKOUT : null;
+        },
+        reviewModel: reviewModelByFile({ "src/checkout.ts": reviewJson([onDiffBug]) }),
+        judgeModel: mockModel([judgeJson([[onDiffBug, 0.95]])]),
+      },
+    );
+    expect(result.inline.map((x) => x.ruleKey)).toEqual(["missing-await"]);
+    expect(reviews[0]?.comments).toHaveLength(1);
+    expect(reads).toContain("src/checkout.ts");
+    expect(result.skippedFiles).toContainEqual({ file: "src/ghost.ts", reason: "not found in the checkout" });
+  });
+
+  it("fails clearly when given neither a workspace nor a reader", async () => {
+    await expect(runPrReview({ event: prEvent() }, { gh: fakeGitHub(prFiles).gh })).rejects.toThrow(
+      "workspace or a readFile",
+    );
+  });
+});
+
 describe("risk label", () => {
   const stale = ["sift:risk-low", "sift:risk-medium", "bug"];
   const labelled = (opts: { labels?: string[]; failLabels?: boolean }, review = reviewJson([onDiffBug])) => {

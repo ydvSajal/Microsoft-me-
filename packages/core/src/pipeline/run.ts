@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve, sep } from "node:path";
 import { judge, type LanguageModel, reviewHunks } from "@sift/ai";
 import {
   renderInline,
@@ -23,30 +21,23 @@ import { contextHunks, snippet } from "./context";
 import type { TPrEvent } from "./event";
 import { mapLimit } from "./map-limit";
 import { type SkippedFile, selectFiles } from "./select-files";
+import { type ReadFile, workspaceReader } from "./workspace";
 
-export type RunContext = { event: TPrEvent; workspace: string };
+export type RunContext = {
+  event: TPrEvent;
+  /** Local checkout; the default `readFile` reads from it. Not needed when `deps.readFile` is given. */
+  workspace?: string;
+};
 export type RunDeps = {
   gh: GitHub;
   /** Injected in tests; default to the env-configured models. */
   reviewModel?: LanguageModel;
   judgeModel?: LanguageModel;
+  /** How changed files are read: the local checkout (Action) or the contents API (App). */
+  readFile?: ReadFile;
 };
 
 const WHAT_CHANGED_MAX = 400; // ReviewResult.whatChanged limit
-
-/** Reads a changed file from the checkout, refusing paths that escape it. */
-function readWorkspaceFile(workspace: string, file: string): string[] | null {
-  const root = resolve(workspace);
-  const path = resolve(root, file);
-  if (!path.startsWith(root + sep)) return null;
-  try {
-    return readFileSync(path, "utf8")
-      .replace(/\r?\n$/, "")
-      .split(/\r?\n/);
-  } catch {
-    return null;
-  }
-}
 
 /**
  * The PR review pipeline (ARCHITECTURE §2): select files → diff map → one model call per file
@@ -54,6 +45,8 @@ function readWorkspaceFile(workspace: string, file: string): string[] | null {
  * A failing file never fails the review (NFR-03); it's listed under skipped files.
  */
 export async function runPrReview({ event, workspace }: RunContext, deps: RunDeps): Promise<TReviewResult> {
+  const readFile = deps.readFile ?? (workspace ? workspaceReader(workspace) : undefined);
+  if (!readFile) throw new Error("runPrReview needs a workspace or a readFile dependency");
   const started = performance.now();
   const pr = event.pull_request;
   const files = await deps.gh.listFiles(pr.number);
@@ -65,7 +58,7 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
 
   // 1. Review each file, with real surrounding code as context.
   const perFile = await mapLimit(review, LLM_CONCURRENCY, async (f) => {
-    const lines = readWorkspaceFile(workspace, f.filename);
+    const lines = await readFile(f.filename);
     if (!lines) {
       skippedFiles.push({ file: f.filename, reason: "not found in the checkout" });
       return null;
