@@ -1,0 +1,129 @@
+// TRD §3. Contracts change in their own PR first (CONTRIBUTING §5).
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  NIT
+}
+
+enum RiskTier {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum Placement {
+  INLINE
+  SUMMARY
+  DROPPED
+}
+
+enum Outcome {
+  PENDING
+  ACCEPTED
+  DISMISSED
+}
+
+model Repo {
+  id        String         @id @default(cuid())
+  owner     String
+  name      String
+  createdAt DateTime       @default(now())
+  prs       PullRequest[]
+  stats     CategoryStat[]
+
+  @@unique([owner, name])
+}
+
+model PullRequest {
+  id                 String   @id @default(cuid())
+  repoId             String
+  repo               Repo     @relation(fields: [repoId], references: [id])
+  number             Int
+  title              String
+  author             String
+  requestedReviewers String[]
+  riskTier           RiskTier
+  reviewing          Boolean  @default(false)
+  openedAt           DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  reviews            Review[]
+
+  @@unique([repoId, number])
+}
+
+model Review {
+  id              String      @id @default(cuid())
+  prId            String
+  pr              PullRequest @relation(fields: [prId], references: [id])
+  headSha         String
+  riskTier        RiskTier
+  inlineCount     Int
+  summarizedCount Int
+  droppedCount    Int
+  llmCalls        Int
+  durationMs      Int
+  skippedReason   String?
+  createdAt       DateTime    @default(now())
+  findings        Finding[]
+}
+
+model Finding {
+  id            String    @id @default(cuid())
+  reviewId      String
+  review        Review    @relation(fields: [reviewId], references: [id])
+  fingerprint   String
+  file          String
+  line          Int
+  severity      Severity
+  category      String
+  ruleKey       String
+  title         String
+  confidence    Float
+  placement     Placement
+  outcome       Outcome   @default(PENDING)
+  outcomeSource String?
+
+  @@index([fingerprint])
+}
+
+model CategoryStat {
+  id        String  @id @default(cuid())
+  repoId    String
+  repo      Repo    @relation(fields: [repoId], references: [id])
+  category  String
+  accepted  Int     @default(0)
+  dismissed Int     @default(0)
+  muted     Boolean @default(false)
+
+  @@unique([repoId, category])
+}
+
+model User {
+  id             String    @id @default(cuid())
+  githubLogin    String    @unique
+  telegramChatId String?   @unique
+  linkToken      String?   @unique
+  roastMode      Boolean   @default(false)
+  snoozedUntil   DateTime?
+  devices        Device[]
+}
+
+model Device {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique // sha256 of the device token
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  rev        Int       @default(0)
+  lastSeenAt DateTime?
+}

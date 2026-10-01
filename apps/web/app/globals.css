@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+/*
+ * Sift design tokens: ONE theme for the landing page, dashboard and paste page.
+ * Neutrals: cool zinc. One accent: cobalt. Risk colours are semantic only (never decoration).
+ * Radius rule: controls (buttons, inputs, badges) 8px; panels 12px. Nothing else.
+ * Light and dark follow the OS (prefers-color-scheme).
+ */
+:root {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-2: #f0f0f2;
+  --line: #e2e2e6;
+  --text: #17171c;
+  --muted: #5d5d68;
+  --faint: #8a8a96;
+  --accent: #2b50e8;
+  --accent-ink: #ffffff;
+  --accent-soft: #e8ecfd;
+  --risk-high: #c8333a;
+  --risk-high-soft: #fbeaea;
+  --risk-medium: #a8650a;
+  --risk-medium-soft: #fbf1e1;
+  --risk-low: #23784f;
+  --risk-low-soft: #e6f4ec;
+  --shadow: 0 1px 2px rgb(23 23 40 / 0.06), 0 8px 24px rgb(23 23 40 / 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e12;
+    --surface: #16161c;
+    --surface-2: #1d1d25;
+    --line: #2a2a34;
+    --text: #ececf1;
+    --muted: #a0a0ad;
+    --faint: #73737f;
+    --accent: #6b86ff;
+    --accent-ink: #0e0e12;
+    --accent-soft: #1d2340;
+    --risk-high: #ff6b70;
+    --risk-high-soft: #3a1a1d;
+    --risk-medium: #f2b45a;
+    --risk-medium-soft: #3a2a14;
+    --risk-low: #5cd39a;
+    --risk-low-soft: #15301f;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.35);
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-risk-high: var(--risk-high);
+  --color-risk-high-soft: var(--risk-high-soft);
+  --color-risk-medium: var(--risk-medium);
+  --color-risk-medium-soft: var(--risk-medium-soft);
+  --color-risk-low: var(--risk-low);
+  --color-risk-low-soft: var(--risk-low-soft);
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --shadow-panel: var(--shadow);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
