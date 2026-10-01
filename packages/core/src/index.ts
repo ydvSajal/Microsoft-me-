@@ -5,6 +5,7 @@ export * from "./dedupe/group";
 export * from "./dedupe/posted";
 export * from "./rank/rank";
 export * from "./risk/risk";
+export * from "./stack/stack";
 export * from "./validate/grounding";
 export * from "./github/client";
 export * from "./context/impact";

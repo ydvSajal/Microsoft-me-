@@ -54,3 +54,21 @@ Checkout flow: totals the cart, logs, and charges the user.
 
 <sub>Sift only comments; a human reviewer approves. 1 model call · 8.1 s</sub>"
 `;
+
+exports[`renderSummary > shows the stack risk map, marking this PR 1`] = `
+"### Sift review · risk 🟡 Medium
+
+Top layer of a 3-PR stack: calls \`refund\` from the checkout error path.
+
+**0 inline comments** · 1 more below
+
+#### Also worth a look
+- 🔵 Low \`src/checkout.ts:38\` — \`d\` doesn't say what the date is for (also in \`src/cart.ts:22\`) <!-- sift:fp=8a33b1c63a08 -->
+
+#### Stack (bottom to top)
+- #13 not re-reviewed
+- #14 🔴 High · 1 finding
+- #15 🟡 Medium · 1 finding ← this PR
+
+<sub>Sift only comments; a human reviewer approves. 2 model calls · 23.4 s · 1 dropped as unverified or low-confidence</sub>"
+`;

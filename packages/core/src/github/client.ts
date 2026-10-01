@@ -1,5 +1,6 @@
 import { Octokit } from "@octokit/rest";
 import type { PrFile } from "../diff/diff-map";
+import type { OpenPr } from "../stack/stack";
 
 export type ReviewComment = { path: string; line: number; side: "RIGHT"; body: string };
 
@@ -12,6 +13,8 @@ export type GitHub = {
   createReview(prNumber: number, review: NewReview): Promise<void>;
   /** Bodies of every review and inline review comment on the PR, for reading back `sift:fp` markers. */
   listPostedBodies(prNumber: number): Promise<string[]>;
+  /** Every open PR in the repo, for stack detection (TRD §4.5). */
+  listOpenPrs(): Promise<OpenPr[]>;
   /** Make `add` the only label of its kind on the PR: create it if missing, remove the `remove` ones. */
   syncLabels(prNumber: number, change: LabelChange): Promise<void>;
 };
@@ -47,6 +50,21 @@ export function createGitHub(token: string, owner: string, repo: string): GitHub
         octokit.paginate(octokit.rest.pulls.listReviewComments, base),
       ]);
       return [...reviews, ...comments].map((x) => x.body ?? "");
+    },
+    async listOpenPrs() {
+      const prs = await octokit.paginate(octokit.rest.pulls.list, {
+        owner,
+        repo,
+        state: "open",
+        per_page: 100,
+      });
+      return prs.map((p) => ({
+        number: p.number,
+        title: p.title,
+        headRef: p.head.ref,
+        baseRef: p.base.ref,
+        labels: p.labels.map((l) => l.name),
+      }));
     },
     async syncLabels(prNumber, { add, remove }) {
       // 422 = label already exists; 404 = label wasn't on the PR. Both are the state we want.

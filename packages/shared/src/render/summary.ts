@@ -51,6 +51,13 @@ export function renderSummary(r: TReviewResult, opts: SummaryOptions = {}): stri
     lines.push(...details(`Not reviewed (${plural(r.skippedFiles.length, "file")})`, skipped));
   }
 
+  if (r.stack && r.stack.length > 1) {
+    const layer = (s: NonNullable<typeof r.stack>[number]) =>
+      `- #${s.prNumber} ${s.skipped ? "not re-reviewed" : `${RISK_BADGE[s.riskTier]} · ${plural(s.findings, "finding")}`}` +
+      (s.prNumber === r.prNumber ? " ← this PR" : "");
+    lines.push("#### Stack (bottom to top)", ...r.stack.map(layer), "");
+  }
+
   const dropped = r.droppedCount > 0 ? ` · ${r.droppedCount} dropped as unverified or low-confidence` : "";
   lines.push(
     `<sub>Sift only comments; a human reviewer approves. ${plural(r.stats.llmCalls, "model call")} · ` +

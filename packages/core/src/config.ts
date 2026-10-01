@@ -15,6 +15,8 @@ export const CONTEXT_LINES = 20;
 export const IMPACT_REFS_PER_SYMBOL = 10;
 /** Most callers listed in the summary; signature-changed symbols come first. */
 export const IMPACT_LISTED = 10;
+/** Largest diff `git patch-id` may be fed (bytes). */
+export const PATCH_ID_MAX_BUFFER = 64 * 1024 * 1024;
 export const SENSITIVE_PATHS = [
   /auth/i,
   /payment|billing|refund/i,
