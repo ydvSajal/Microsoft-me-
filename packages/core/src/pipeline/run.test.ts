@@ -250,7 +250,7 @@ describe("runPrReview end to end (fake GitHub + mock models)", () => {
       review: { "src/checkout.ts": reviewJson([onDiffBug, { ...onDiffBug, line: 7 }]) },
     });
     expect(result.inline).toHaveLength(1);
-    expect(result.droppedCount).toBe(1);
+    expect(result.droppedCount).toBe(0); // folded into one comment, not discarded
   });
 
   it("lists a file whose model output is unreadable twice as skipped", async () => {
@@ -275,6 +275,48 @@ describe("runPrReview end to end (fake GitHub + mock models)", () => {
     expect(reviews).toHaveLength(1);
     expect(result).toMatchObject({ inline: [], summarized: [], riskTier: "low" });
     expect(result.stats.llmCalls).toBe(0);
+  });
+});
+
+describe("re-push (dedupe across pushes)", () => {
+  async function pushTwice(second?: { review: string }) {
+    const { gh, reviews } = fakeGitHub(prFiles);
+    const ws = workspace({ "src/checkout.ts": CHECKOUT, "src/broken.ts": ["a", "b"] });
+    const answer = reviewJson([onDiffBug, offDiff, nit]);
+    const push = (review: string) =>
+      runPrReview(
+        { event: prEvent(), workspace: ws },
+        {
+          gh,
+          reviewModel: reviewModelByFile({ "src/checkout.ts": review, "src/broken.ts": reviewJson([]) }),
+          judgeModel: mockModel([judgeJson([[onDiffBug, 0.95]])]),
+        },
+      );
+    await push(answer);
+    const result = await push(second?.review ?? answer);
+    return { result, reviews };
+  }
+
+  it("posts 0 repeats: the same findings on the next push produce no new review", async () => {
+    const { result, reviews } = await pushTwice();
+    expect(reviews).toHaveLength(1);
+    expect(result.inline).toEqual([]);
+    expect(result.summarized).toEqual([]);
+  });
+
+  it("still posts what is new on a later push, without the old findings", async () => {
+    const fresh = f({
+      line: 8,
+      severity: "high",
+      ruleKey: "throws-empty",
+      title: "Throws on empty cart",
+      quotedCode: 'throw new Error("Empty cart");',
+    });
+    const { result, reviews } = await pushTwice({ review: reviewJson([onDiffBug, offDiff, nit, fresh]) });
+    expect(reviews).toHaveLength(2);
+    expect(result.summarized.map((x) => x.ruleKey)).toEqual(["throws-empty"]);
+    expect(reviews[1]?.comments).toEqual([]);
+    expect(reviews[1]?.body).not.toContain("isn't awaited");
   });
 });
 
