@@ -349,6 +349,74 @@ describe("readFile seam (no filesystem)", () => {
   });
 });
 
+describe("impact analysis (feature flag)", () => {
+  const CART = [
+    "export class Cart {",
+    "  items: number[] = [];",
+    "  async getTotal(): Promise<number> {",
+    "    return this.items.reduce((a, b) => a + b, 0);",
+    "  }",
+    "}",
+  ];
+  const CART_PATCH = [
+    "@@ -1,5 +1,5 @@",
+    " export class Cart {",
+    "   items: number[] = [];",
+    "-  getTotal(): number {",
+    "+  async getTotal(): Promise<number> {",
+    "     return this.items.reduce((a, b) => a + b, 0);",
+    "   }",
+  ].join("\n");
+  const files: PrFile[] = [{ filename: "src/cart.ts", status: "modified", patch: CART_PATCH }];
+  const ws = () =>
+    workspace({
+      "tsconfig.json": ['{ "compilerOptions": { "strict": true }, "include": ["src"] }'],
+      "src/cart.ts": CART,
+      "src/checkout.ts": ['import { Cart } from "./cart";', "export const t = (c: Cart) => c.getTotal();"],
+    });
+  const go = (features?: ReadonlySet<string>) => {
+    const { gh, reviews } = fakeGitHub(files);
+    const reviewModel = reviewModelByFile({ "src/cart.ts": reviewJson([]) });
+    const result = runPrReview(
+      { event: prEvent(), workspace: ws() },
+      { gh, reviewModel, judgeModel: mockModel([judgeJson([])]), features },
+    );
+    return { result, reviews, reviewModel };
+  };
+
+  it("lists callers outside the diff, tells the model, and rates a changed signature high", async () => {
+    const { result, reviews, reviewModel } = go(new Set(["impact"]));
+    const r = await result;
+    expect(r.impact).toEqual([{ symbol: "Cart.getTotal", file: "src/checkout.ts", line: 2 }]);
+    expect(r.riskTier).toBe("high");
+    expect(JSON.stringify(reviewModel.doGenerateCalls[0]?.prompt)).toContain(
+      "Cart.getTotal is used at src/checkout.ts:2",
+    );
+    expect(reviews[0]?.body).toContain("`Cart.getTotal` used at `src/checkout.ts:2`");
+  });
+
+  it("does nothing without the flag", async () => {
+    const r = await go().result;
+    expect(r.impact).toEqual([]);
+    expect(r.riskTier).toBe("low");
+  });
+
+  it("a broken project never fails the review", async () => {
+    const { gh } = fakeGitHub(files);
+    const dir = workspace({ "tsconfig.json": ["{ not json"], "src/cart.ts": CART });
+    const r = await runPrReview(
+      { event: prEvent(), workspace: dir },
+      {
+        gh,
+        reviewModel: reviewModelByFile({ "src/cart.ts": reviewJson([]) }),
+        judgeModel: mockModel([judgeJson([])]),
+        features: new Set(["impact"]),
+      },
+    );
+    expect(r.impact).toEqual([]);
+  });
+});
+
 describe("risk label", () => {
   const stale = ["sift:risk-low", "sift:risk-medium", "bug"];
   const labelled = (opts: { labels?: string[]; failLabels?: boolean }, review = reviewJson([onDiffBug])) => {

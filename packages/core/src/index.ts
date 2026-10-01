@@ -7,6 +7,8 @@ export * from "./rank/rank";
 export * from "./risk/risk";
 export * from "./validate/grounding";
 export * from "./github/client";
+export * from "./context/impact";
 export * from "./pipeline/event";
+export * from "./pipeline/features";
 export * from "./pipeline/run";
 export * from "./pipeline/workspace";

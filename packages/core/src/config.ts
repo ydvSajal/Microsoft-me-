@@ -11,6 +11,10 @@ export const MUTABLE_SEVERITIES = ["low", "nit"] as const;
 export const LARGE_PR_LINES = 400;
 /** Lines of real file content shown to the model around each changed range. */
 export const CONTEXT_LINES = 20;
+/** Uses of one changed export passed to the model (TRD §4.8). */
+export const IMPACT_REFS_PER_SYMBOL = 10;
+/** Most callers listed in the summary; signature-changed symbols come first. */
+export const IMPACT_LISTED = 10;
 export const SENSITIVE_PATHS = [
   /auth/i,
   /payment|billing|refund/i,

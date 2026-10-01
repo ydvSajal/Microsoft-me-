@@ -1,6 +1,6 @@
 // GitHub Action entry: read env, hand off to @sift/core. Keep logic out of this file.
 import { readFileSync } from "node:fs";
-import { createGitHub, PrEvent, runPrReview, skipReason } from "@sift/core";
+import { createGitHub, PrEvent, parseFeatures, runPrReview, skipReason } from "@sift/core";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -17,7 +17,10 @@ try {
     const { owner, name } = { owner: event.repository.owner.login, name: event.repository.name };
     const gh = createGitHub(required("GITHUB_TOKEN"), owner, name);
     const workspace = process.env.SIFT_WORKSPACE ?? process.cwd();
-    const r = await runPrReview({ event, workspace }, { gh });
+    const r = await runPrReview(
+      { event, workspace },
+      { gh, features: parseFeatures(process.env.SIFT_FEATURES) },
+    );
     console.log(
       `Sift: reviewed PR #${r.prNumber}: risk ${r.riskTier}, ${r.inline.length} inline, ` +
         `${r.summarized.length} in summary, ${r.droppedCount} dropped, ${r.skippedFiles.length} files skipped, ` +

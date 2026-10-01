@@ -8,12 +8,13 @@ import {
   type TRiskTier,
 } from "@sift/shared";
 import { fingerprint } from "@sift/shared/fingerprint";
-import { LLM_CONCURRENCY } from "../config";
-import { buildDiffMap } from "../diff/diff-map";
+import { IMPACT_LISTED, LLM_CONCURRENCY } from "../config";
+import { buildDiffMap, type DiffMap } from "../diff/diff-map";
 import { parsePatch } from "../diff/parse-patch";
 import type { GitHub, NewReview } from "../github/client";
 import { groupFindings } from "../dedupe/group";
 import { dropPosted, postedFingerprints } from "../dedupe/posted";
+import { analyzeImpact, type ImpactFinding, impactContext } from "../context/impact";
 import { type Candidate, rank } from "../rank/rank";
 import { RISK_LABEL_COLOR, RISK_LABELS, riskLabel, riskTier } from "../risk/risk";
 import { groundFinding } from "../validate/grounding";
@@ -35,6 +36,8 @@ export type RunDeps = {
   judgeModel?: LanguageModel;
   /** How changed files are read: the local checkout (Action) or the contents API (App). */
   readFile?: ReadFile;
+  /** Enabled optional features (`parseFeatures(SIFT_FEATURES)`); none by default. */
+  features?: ReadonlySet<string>;
 };
 
 const WHAT_CHANGED_MAX = 400; // ReviewResult.whatChanged limit
@@ -56,6 +59,12 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   let llmCalls = 0;
   let dropped = 0;
 
+  // Where the exports this PR changes are used in files it doesn't touch (feature flag `impact`).
+  const impact =
+    deps.features?.has("impact") && workspace
+      ? findImpact(workspace, new Set(files.map((f) => f.filename)), diffMap)
+      : [];
+
   // 1. Review each file, with real surrounding code as context.
   const perFile = await mapLimit(review, LLM_CONCURRENCY, async (f) => {
     const lines = await readFile(f.filename);
@@ -65,7 +74,10 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
     }
     try {
       const hunks = contextHunks(parsePatch(f.patch ?? ""), lines);
-      const out = await reviewHunks({ file: f.filename, hunks }, { model: deps.reviewModel });
+      const out = await reviewHunks(
+        { file: f.filename, hunks, context: impactContext(impact, f.filename) },
+        { model: deps.reviewModel },
+      );
       llmCalls += out.llmCalls;
       dropped += out.invalidCount;
       if (out.error) skippedFiles.push({ file: f.filename, reason: "model output unreadable twice" });
@@ -118,6 +130,7 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   const risk = riskTier(
     [...confident.inline, ...confident.summarized].map((f) => f.severity),
     files,
+    impact.some((i) => i.signatureChanged),
   );
 
   const result = ReviewResult.parse({
@@ -135,6 +148,10 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
       .slice(0, WHAT_CHANGED_MAX),
     inline,
     summarized,
+    impact: [...impact]
+      .sort((a, b) => Number(b.signatureChanged) - Number(a.signatureChanged))
+      .slice(0, IMPACT_LISTED)
+      .map(({ symbol, file, line }) => ({ symbol, file, line })),
     droppedCount: dropped,
     skippedFiles,
     stats: { llmCalls, durationMs: Math.round(performance.now() - started) },
@@ -148,6 +165,16 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   }
   await labelRisk(deps.gh, pr.number, result.riskTier);
   return result;
+}
+
+/** Impact analysis never fails the review; without it the review just has less context. */
+function findImpact(workspace: string, changedFiles: ReadonlySet<string>, diffMap: DiffMap): ImpactFinding[] {
+  try {
+    return analyzeImpact({ workspace, changedFiles, diffMap });
+  } catch (err) {
+    console.log(`::warning::Impact analysis failed: ${err instanceof Error ? err.message : String(err)}`);
+    return [];
+  }
 }
 
 /** Exactly one sift:risk-* label. A label failure (e.g. read-only token) never fails the review. */
