@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "benchmark"
 
 # pnpm 11 blocks dependency build scripts unless allowed here.
 allowBuilds:

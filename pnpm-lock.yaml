@@ -97,6 +97,28 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
+  benchmark:
+    dependencies:
+      '@octokit/rest':
+        specifier: ^22.0.1
+        version: 22.0.1
+      '@sift/ai':
+        specifier: workspace:*
+        version: link:../packages/ai
+      '@sift/core':
+        specifier: workspace:*
+        version: link:../packages/core
+      '@sift/shared':
+        specifier: workspace:*
+        version: link:../packages/shared
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+
   packages/ai:
     dependencies:
       '@ai-sdk/google':

@@ -1,0 +1,20 @@
+{
+  "name": "@sift/bench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx runner/index.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "@sift/ai": "workspace:*",
+    "@sift/core": "workspace:*",
+    "@sift/shared": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

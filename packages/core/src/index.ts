@@ -14,5 +14,7 @@ export * from "./github/client";
 export * from "./context/impact";
 export * from "./pipeline/event";
 export * from "./pipeline/features";
+export * from "./pipeline/context";
 export * from "./pipeline/run";
+export * from "./pipeline/select-files";
 export * from "./pipeline/workspace";
