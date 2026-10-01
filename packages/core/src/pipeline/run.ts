@@ -16,6 +16,15 @@ import { groupFindings } from "../dedupe/group";
 import { dropPosted, postedFingerprints } from "../dedupe/posted";
 import { analyzeImpact, type ImpactFinding, impactContext } from "../context/impact";
 import { type Candidate, rank } from "../rank/rank";
+import {
+  detectStack,
+  gitPatchId,
+  lastPatchId,
+  type OpenPr,
+  type PatchId,
+  stackLayers,
+  tierFromLabels,
+} from "../stack/stack";
 import { RISK_LABEL_COLOR, RISK_LABELS, riskLabel, riskTier } from "../risk/risk";
 import { groundFinding } from "../validate/grounding";
 import { contextHunks, snippet } from "./context";
@@ -38,6 +47,8 @@ export type RunDeps = {
   readFile?: ReadFile;
   /** Enabled optional features (`parseFeatures(SIFT_FEATURES)`); none by default. */
   features?: ReadonlySet<string>;
+  /** Identity of a layer's own diff (feature `stack`); default: `git patch-id` in the workspace. */
+  patchId?: PatchId;
 };
 
 const WHAT_CHANGED_MAX = 400; // ReviewResult.whatChanged limit
@@ -58,6 +69,35 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   const skippedFiles: SkippedFile[] = [...skipped];
   let llmCalls = 0;
   let dropped = 0;
+
+  // Stack awareness (feature `stack`): which PRs this one is stacked with, and whether its own
+  // diff is unchanged since the last review (a rebase of a lower layer changes sha, not the patch).
+  const stackOn = deps.features?.has("stack") === true;
+  const thisPr: OpenPr = {
+    number: pr.number,
+    title: pr.title,
+    headRef: pr.head.ref,
+    baseRef: pr.base.ref,
+    labels: [],
+  };
+  const open = stackOn ? await deps.gh.listOpenPrs() : [];
+  const layers = stackOn ? detectStack(open, open.find((p) => p.number === pr.number) ?? thisPr) : [thisPr];
+  const bodiesByPr = new Map<number, readonly string[]>(
+    await Promise.all(
+      layers.map(
+        async (l): Promise<[number, readonly string[]]> => [
+          l.number,
+          await deps.gh.listPostedBodies(l.number),
+        ],
+      ),
+    ),
+  );
+  const patchOf = deps.patchId ?? (workspace ? gitPatchId(workspace) : undefined);
+  const patchId = stackOn ? (patchOf?.(pr.base.sha, pr.head.sha) ?? undefined) : undefined;
+  if (patchId && patchId === lastPatchId(bodiesByPr.get(pr.number) ?? [])) {
+    console.log("Sift: this layer's diff is unchanged since the last review, skipping.");
+    return unchangedLayer(event, layers, started);
+  }
 
   // Where the exports this PR changes are used in files it doesn't touch (feature flag `impact`).
   const impact =
@@ -119,10 +159,8 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
 
   // 4. Fold duplicates, skip what an earlier push already posted, then floor, rank and budget.
   const grouped = groupFindings(candidates);
-  const { fresh, repeats } = dropPosted(
-    grouped,
-    postedFingerprints(await deps.gh.listPostedBodies(pr.number)),
-  );
+  // Fingerprints are scoped to the whole stack, so a finding isn't repeated on the next layer.
+  const { fresh, repeats } = dropPosted(grouped, postedFingerprints([...bodiesByPr.values()].flat()));
   const { inline, summarized, dropped: underFloor } = rank(fresh);
   dropped += underFloor;
   // Risk counts every confident finding, including ones an earlier push already posted.
@@ -152,6 +190,14 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
       .sort((a, b) => Number(b.signatureChanged) - Number(a.signatureChanged))
       .slice(0, IMPACT_LISTED)
       .map(({ symbol, file, line }) => ({ symbol, file, line })),
+    stack:
+      layers.length > 1
+        ? stackLayers(
+            layers,
+            { number: pr.number, riskTier: risk, findings: inline.length + summarized.length },
+            bodiesByPr,
+          )
+        : undefined,
     droppedCount: dropped,
     skippedFiles,
     stats: { llmCalls, durationMs: Math.round(performance.now() - started) },
@@ -161,10 +207,34 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   if (repeats > 0 && inline.length === 0 && summarized.length === 0) {
     console.log(`Sift: ${repeats} finding(s) already posted on this PR, nothing new to comment.`);
   } else {
-    await postReview(deps.gh, pr.number, pr.head.sha, result);
+    await postReview(deps.gh, pr.number, pr.head.sha, result, patchId);
   }
   await labelRisk(deps.gh, pr.number, result.riskTier);
   return result;
+}
+
+/** Nothing is re-reviewed or posted for an unchanged layer; the label already on the PR stays. */
+function unchangedLayer(event: TPrEvent, layers: readonly OpenPr[], started: number): TReviewResult {
+  const pr = event.pull_request;
+  const me = layers.find((l) => l.number === pr.number);
+  return ReviewResult.parse({
+    mode: "pr",
+    repo: `${event.repository.owner.login}/${event.repository.name}`,
+    prNumber: pr.number,
+    prTitle: pr.title,
+    author: pr.user.login,
+    headSha: pr.head.sha,
+    riskTier: tierFromLabels(me?.labels ?? []) ?? "low",
+    whatChanged: "",
+    inline: [],
+    summarized: [],
+    droppedCount: 0,
+    stats: {
+      llmCalls: 0,
+      durationMs: Math.round(performance.now() - started),
+      skippedReason: "unchanged-layer",
+    },
+  });
 }
 
 /** Impact analysis never fails the review; without it the review just has less context. */
@@ -195,11 +265,17 @@ async function labelRisk(gh: GitHub, prNumber: number, tier: TRiskTier) {
  * ("line must be part of the diff") impossible; if one still happens, repost with every
  * finding in the summary so the review always lands.
  */
-async function postReview(gh: GitHub, prNumber: number, commitId: string, r: TReviewResult) {
+async function postReview(
+  gh: GitHub,
+  prNumber: number,
+  commitId: string,
+  r: TReviewResult,
+  patchId?: string,
+) {
   const review: NewReview = {
     commit_id: commitId,
     event: "COMMENT",
-    body: renderSummary(r),
+    body: renderSummary(r, { patchId }),
     comments: r.inline.map((f) => ({ path: f.file, line: f.line, side: "RIGHT", body: renderInline(f) })),
   };
   try {
@@ -209,7 +285,7 @@ async function postReview(gh: GitHub, prNumber: number, commitId: string, r: TRe
     console.log(`::warning::GitHub rejected inline comments (422); posting them in the summary instead.`);
     await gh.createReview(prNumber, {
       ...review,
-      body: renderSummary(r, { includeInline: true }),
+      body: renderSummary(r, { includeInline: true, patchId }),
       comments: [],
     });
   }

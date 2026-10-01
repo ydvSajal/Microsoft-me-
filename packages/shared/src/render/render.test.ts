@@ -50,6 +50,14 @@ describe("renderSummary", () => {
     expect(renderSummary(pr, { includeInline: true })).toContain("#### Top findings\n- 🔴 Critical");
   });
 
+  it("shows the stack risk map, marking this PR", () => {
+    const body = renderSummary(load("review-result-stack.json"));
+    expect(body).toMatchSnapshot();
+    expect(body).toContain("#### Stack (bottom to top)");
+    expect(body).toMatch(/- #15 .* ← this PR/);
+    expect(body).toContain("- #13 not re-reviewed");
+  });
+
   it("says so when there is nothing to flag", () => {
     const body = renderSummary({ ...pr, inline: [], summarized: [], impact: [], skippedFiles: [] });
     expect(body).toContain("Nothing to flag on the changed lines.");

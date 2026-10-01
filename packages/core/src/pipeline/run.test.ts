@@ -417,6 +417,87 @@ describe("impact analysis (feature flag)", () => {
   });
 });
 
+describe("stack awareness (feature flag)", () => {
+  const features = new Set(["stack"]);
+  // The event's PR is #12 (head ref + base ref come from the fixture); build a stack around it.
+  const stackOf = () => {
+    const ev = prEvent().pull_request;
+    return [
+      { number: 11, title: "lower", headRef: ev.base.ref, baseRef: "main", labels: ["sift:risk-low"] },
+      { number: 12, title: ev.title, headRef: ev.head.ref, baseRef: ev.base.ref, labels: [] },
+      { number: 13, title: "upper", headRef: "upper", baseRef: ev.head.ref, labels: ["sift:risk-high"] },
+    ];
+  };
+  const marker = `<!-- sift:patch=${"a".repeat(40)} -->`;
+  const go = (opts: {
+    patchId: string | null;
+    postedByPr?: Record<number, string[]>;
+    features?: ReadonlySet<string>;
+  }) => {
+    const { gh, reviews, labels } = fakeGitHub(prFiles, { openPrs: stackOf(), postedByPr: opts.postedByPr });
+    const reviewModel = reviewModelByFile({ "src/checkout.ts": reviewJson([onDiffBug]) });
+    const result = runPrReview(
+      {
+        event: prEvent(),
+        workspace: workspace({ "src/checkout.ts": CHECKOUT, "src/broken.ts": ["a", "b"] }),
+      },
+      {
+        gh,
+        reviewModel,
+        judgeModel: mockModel([judgeJson([[onDiffBug, 0.95]])]),
+        features: opts.features ?? features,
+        patchId: () => opts.patchId,
+      },
+    );
+    return { result, reviews, labels, reviewModel };
+  };
+
+  it("skips an unchanged layer: 0 LLM calls, nothing posted, label untouched", async () => {
+    const { result, reviews, labels, reviewModel } = go({
+      patchId: "a".repeat(40),
+      postedByPr: { 12: [`### Sift review\n${marker}`] },
+    });
+    const r = await result;
+    expect(r.stats).toMatchObject({ llmCalls: 0, skippedReason: "unchanged-layer" });
+    expect(reviewModel.doGenerateCalls).toHaveLength(0);
+    expect(reviews).toEqual([]);
+    expect(labels.size).toBe(0);
+  });
+
+  it("reviews when the layer's own patch changed, and records the new patch-id", async () => {
+    const { result, reviews } = go({ patchId: "b".repeat(40), postedByPr: { 12: [marker] } });
+    expect((await result).stats.skippedReason).toBeUndefined();
+    expect(reviews[0]?.body).toContain(`<!-- sift:patch=${"b".repeat(40)} -->`);
+  });
+
+  it("shows the stack risk map, bottom to top, marking this PR", async () => {
+    const { result, reviews } = go({ patchId: "b".repeat(40) });
+    const r = await result;
+    expect(r.stack?.map((l) => [l.prNumber, l.riskTier, l.skipped])).toEqual([
+      [11, "low", false],
+      [12, "high", false],
+      [13, "high", false],
+    ]);
+    expect(reviews[0]?.body).toContain("#### Stack (bottom to top)");
+    expect(reviews[0]?.body).toMatch(/- #12 .* ← this PR/);
+  });
+
+  it("doesn't repeat a finding another layer of the stack already posted", async () => {
+    const posted = { 13: [`earlier comment\n${`<!-- sift:fp=${fingerprint(onDiffBug)} -->`}`] };
+    const { result } = go({ patchId: "b".repeat(40), postedByPr: posted });
+    const r = await result;
+    expect(r.inline).toEqual([]);
+    expect(r.riskTier).toBe("high"); // risk still counts it
+  });
+
+  it("without the flag nothing about stacks happens", async () => {
+    const { result } = go({ patchId: "a".repeat(40), postedByPr: { 12: [marker] }, features: new Set() });
+    const r = await result;
+    expect(r.stack).toBeUndefined();
+    expect(r.stats.skippedReason).toBeUndefined();
+  });
+});
+
 describe("risk label", () => {
   const stale = ["sift:risk-low", "sift:risk-medium", "bug"];
   const labelled = (opts: { labels?: string[]; failLabels?: boolean }, review = reviewJson([onDiffBug])) => {
