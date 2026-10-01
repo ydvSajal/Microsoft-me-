@@ -4,6 +4,7 @@ import { MAX_BODY_BYTES } from "@/lib/config";
 import { POST as feedback } from "./ingest/feedback/route";
 import { POST as review } from "./ingest/review/route";
 import { POST as started } from "./ingest/review-started/route";
+import { POST as reviewFileRoute } from "./review-file/route";
 
 const SECRET = "test-ingest-secret";
 const req = (body: unknown, auth: string | null = `Bearer ${SECRET}`) =>
@@ -64,4 +65,40 @@ it("review rejects file-mode results", async () => {
     }),
   );
   expect(res.status).toBe(400);
+});
+
+describe("POST /api/review-file", () => {
+  const passReq = (body: unknown, passcode: string | null) =>
+    new Request("http://x/api/review-file", {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: passcode ? { "x-sift-passcode": passcode } : {},
+    });
+
+  beforeEach(() => {
+    process.env.SIFT_DEMO_PASSCODE = "pass";
+  });
+  afterEach(() => {
+    delete process.env.SIFT_DEMO_PASSCODE;
+  });
+
+  it("401 without the right passcode", async () => {
+    expect((await reviewFileRoute(passReq({}, null))).status).toBe(401);
+    expect((await reviewFileRoute(passReq({}, "nope"))).status).toBe(401);
+  });
+
+  it("400 for non-TS files and oversize pastes, before any model call", async () => {
+    const res = await reviewFileRoute(passReq({ filename: "a.py", content: "x" }, "pass"));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.fields).toHaveProperty("filename");
+  });
+
+  it("503 when no AI provider is configured", async () => {
+    const saved = { ...process.env };
+    for (const k of ["SIFT_AI_PROVIDER", "GOOGLE_GENERATIVE_AI_API_KEY", "OPENROUTER_API_KEY", "SIFT_MODEL"])
+      delete process.env[k];
+    const res = await reviewFileRoute(passReq({ filename: "a.ts", content: "const a = 1;" }, "pass"));
+    Object.assign(process.env, saved);
+    expect(res.status).toBe(503);
+  });
 });

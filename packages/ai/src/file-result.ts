@@ -1,4 +1,5 @@
-import type { ReviewOutput } from "@sift/ai";
+// File mode (CLI and the web paste page): one model call over the whole file, no diff.
+import type { ReviewOutput } from "./review";
 import {
   riskFromSeverities,
   ReviewResult,

@@ -3,9 +3,8 @@
 import { readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { parseArgs } from "node:util";
-import { ProviderConfigError, reviewHunks } from "@sift/ai";
+import { buildFileResult, ProviderConfigError, REVIEWABLE_FILE, reviewHunks } from "@sift/ai";
 import { formatResult } from "./format";
-import { buildFileResult, REVIEWABLE_FILE } from "./result";
 
 const USAGE = "Usage: pnpm sift review <file.ts|.tsx|.js|.jsx> [--json]";
 

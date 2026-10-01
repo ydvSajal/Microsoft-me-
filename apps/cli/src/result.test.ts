@@ -2,7 +2,7 @@ import type { ReviewOutput } from "@sift/ai";
 import type { TModelFinding } from "@sift/shared";
 import { describe, expect, it } from "vitest";
 import { formatResult } from "./format";
-import { buildFileResult, REVIEWABLE_FILE } from "./result";
+import { buildFileResult, REVIEWABLE_FILE } from "@sift/ai";
 
 const f = (over: Partial<TModelFinding>): TModelFinding => ({
   file: "src/checkout.ts",
