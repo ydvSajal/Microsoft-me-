@@ -9,3 +9,4 @@ export * from "./validate/grounding";
 export * from "./github/client";
 export * from "./pipeline/event";
 export * from "./pipeline/run";
+export * from "./pipeline/workspace";

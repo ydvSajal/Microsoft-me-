@@ -37,7 +37,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 | ☑ | **T-12** | P0 | Rank + budget | `feat/t12-rank` | Score = weight × confidence; ≤7 inline; nits never inline; ordering tests |
 | ☑ | **T-13** | P0 | Dedupe | `feat/t13-dedupe` | Fingerprints + grouping per TRD §4.2; N files → 1 comment with "also in"; re-push posts 0 repeats |
 | ☑ | **T-14** | P0 | Risk tier + labels (**Gate 2**) | `feat/t14-risk` | Tier per TRD §4.4; exactly one `sift:risk-*` label, stale ones removed |
-| ☐ | **T-28** | P1 | Entry-point seams (App-ready) | `refactor/t28-seams` | `runPrReview` reads files only through an injected `readFile(path)` dep (default: the workspace reader) and reads no env or Action-only state; tests use an in-memory reader; zero behaviour change. Keeps the GitHub App (T-29+) a new entry point, not a rewrite. See ARCHITECTURE §7 |
+| ☑ | **T-28** | P1 | Entry-point seams (App-ready) | `refactor/t28-seams` | `runPrReview` reads files only through an injected `readFile(path)` dep (default: the workspace reader) and reads no env or Action-only state; tests use an in-memory reader; zero behaviour change. Keeps the GitHub App (T-29+) a new entry point, not a rewrite. See ARCHITECTURE §7 |
 
 ## Oct 4 — differentiators + benchmark data
 
