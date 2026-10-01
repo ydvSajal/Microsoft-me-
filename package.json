@@ -13,7 +13,8 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run --passWithNoTests",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "sift": "tsx apps/cli/src/index.ts"
+    "sift": "tsx apps/cli/src/index.ts",
+    "bench": "pnpm --filter @sift/bench start"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
