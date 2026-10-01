@@ -81,6 +81,16 @@ describe("rank", () => {
     expect(ids(r.summarized)).toEqual(ids([off.finding]));
   });
 
+  it("a muted category drops only its low and nit findings", () => {
+    const lowStyle = c({ category: "style" }, "inline", "low");
+    const nitStyle = c({ category: "style" }, "inline", "nit");
+    const highStyle = c({ category: "style" }, "inline", "high");
+    const lowBug = c({ category: "bug" }, "inline", "low");
+    const r = rank([lowStyle, nitStyle, highStyle, lowBug], ["style"]);
+    expect(ids([...r.inline, ...r.summarized])).toEqual(ids([highStyle.finding, lowBug.finding]));
+    expect(r.dropped).toBe(2);
+  });
+
   it("handles no findings", () => {
     expect(rank([])).toEqual({ inline: [], summarized: [], dropped: 0 });
   });

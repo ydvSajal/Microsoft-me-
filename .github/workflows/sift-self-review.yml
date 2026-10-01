@@ -5,6 +5,8 @@ name: Sift self-review
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review_comment:
+    types: [created]       # "/sift accept|ignore" replies → feedback only, no review
 
 permissions:
   contents: read
@@ -12,7 +14,7 @@ permissions:
   issues: write            # risk labels
 
 concurrency:
-  group: sift-self-${{ github.event.pull_request.number }}
+  group: sift-self-${{ github.event_name }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:

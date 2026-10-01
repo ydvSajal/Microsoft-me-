@@ -53,7 +53,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 |---|---|---|---|---|---|
 | ☐ | **T-18** | P0 | DB + ingest API + health *(code merged; deploy pending: Vercel project + Postgres)* | `feat/t18-ingest` | Prisma schema (TRD §3) + migration; ingest routes, `/config`, `GET /api/health`; Bearer auth, zod, 1 MB cap; deployed on Vercel; `deploy-smoke` green |
 | ☐ | **T-19** | P0 | Paste page + dashboard + landing page *(code merged; live check pending: model key + deploy)* | `feat/t19-dashboard` | `/review` (passcode) → findings + summary; `/repos/[owner]/[name]`: PRs with risk + precision by category; `/prs/[id]`: findings with placement and outcome; empty/error states |
-| ☐ | **T-20** | P1 | Ingest client + feedback | `feat/t20-feedback` | Action posts review-started + result; collects outcomes per TRD §4.6; API down → review still posts; flag `feedback` |
+| ☑ | **T-20** | P1 | Ingest client + feedback | `feat/t20-feedback` | Action posts review-started + result; collects outcomes per TRD §4.6; API down → review still posts; flag `feedback` |
 | ☐ | **T-21** | P0 | Benchmark runner + results | `feat/t21-bench` | `pnpm bench`: Sift vs naive single-pass LLM (+ Copilot if available), 3 runs each; `benchmark/results.md` with the PRD §6 metrics (medians) + method note |
 
 ## Oct 6 — demo-ready
