@@ -4,7 +4,9 @@ packages:
 
 # pnpm 11 blocks dependency build scripts unless allowed here.
 allowBuilds:
+  '@prisma/engines': true
   esbuild: true
+  prisma: true
 
 # Published inside pnpm's minimum-release-age window; exempted explicitly.
 minimumReleaseAgeExclude:
