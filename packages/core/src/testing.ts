@@ -16,8 +16,14 @@ export const prEvent = (): TPrEvent => PrEvent.parse(loadFixture("pr-event.json"
  */
 export function fakeGitHub(
   files: PrFile[],
-  opts: { failReviews?: { times: number; status: number }; posted?: string[] } = {},
+  opts: {
+    failReviews?: { times: number; status: number };
+    posted?: string[];
+    labels?: string[];
+    failLabels?: boolean;
+  } = {},
 ) {
+  const labels = new Set(opts.labels ?? []);
   const reviews: NewReview[] = [];
   let failures = opts.failReviews?.times ?? 0;
   const gh: GitHub = {
@@ -26,6 +32,12 @@ export function fakeGitHub(
       ...(opts.posted ?? []),
       ...reviews.flatMap((r) => [r.body, ...r.comments.map((c) => c.body)]),
     ],
+    syncLabels: async (_pr, { add, remove }) => {
+      if (opts.failLabels)
+        throw Object.assign(new Error("Resource not accessible by integration"), { status: 403 });
+      for (const name of remove) labels.delete(name);
+      labels.add(add.name);
+    },
     createReview: async (_pr, review) => {
       if (failures > 0) {
         failures--;
@@ -36,5 +48,5 @@ export function fakeGitHub(
       reviews.push(review);
     },
   };
-  return { gh, reviews };
+  return { gh, reviews, labels };
 }

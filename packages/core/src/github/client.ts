@@ -12,7 +12,16 @@ export type GitHub = {
   createReview(prNumber: number, review: NewReview): Promise<void>;
   /** Bodies of every review and inline review comment on the PR, for reading back `sift:fp` markers. */
   listPostedBodies(prNumber: number): Promise<string[]>;
+  /** Make `add` the only label of its kind on the PR: create it if missing, remove the `remove` ones. */
+  syncLabels(prNumber: number, change: LabelChange): Promise<void>;
 };
+
+export type LabelChange = {
+  add: { name: string; color: string; description: string };
+  remove: readonly string[];
+};
+
+const isStatus = (err: unknown, status: number) => (err as { status?: number }).status === status;
 
 export function createGitHub(token: string, owner: string, repo: string): GitHub {
   const octokit = new Octokit({ auth: token, userAgent: "sift-reviewer" });
@@ -38,6 +47,18 @@ export function createGitHub(token: string, owner: string, repo: string): GitHub
         octokit.paginate(octokit.rest.pulls.listReviewComments, base),
       ]);
       return [...reviews, ...comments].map((x) => x.body ?? "");
+    },
+    async syncLabels(prNumber, { add, remove }) {
+      // 422 = label already exists; 404 = label wasn't on the PR. Both are the state we want.
+      await octokit.rest.issues.createLabel({ owner, repo, ...add }).catch((e) => {
+        if (!isStatus(e, 422)) throw e;
+      });
+      for (const name of remove) {
+        await octokit.rest.issues.removeLabel({ owner, repo, issue_number: prNumber, name }).catch((e) => {
+          if (!isStatus(e, 404)) throw e;
+        });
+      }
+      await octokit.rest.issues.addLabels({ owner, repo, issue_number: prNumber, labels: [add.name] });
     },
     async createReview(prNumber, review) {
       await octokit.rest.pulls.createReview({ owner, repo, pull_number: prNumber, ...review });

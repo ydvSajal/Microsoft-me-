@@ -5,9 +5,9 @@ import {
   renderInline,
   renderSummary,
   ReviewResult,
-  riskFromSeverities,
   type TFinding,
   type TReviewResult,
+  type TRiskTier,
 } from "@sift/shared";
 import { fingerprint } from "@sift/shared/fingerprint";
 import { LLM_CONCURRENCY } from "../config";
@@ -17,6 +17,7 @@ import type { GitHub, NewReview } from "../github/client";
 import { groupFindings } from "../dedupe/group";
 import { dropPosted, postedFingerprints } from "../dedupe/posted";
 import { type Candidate, rank } from "../rank/rank";
+import { RISK_LABEL_COLOR, RISK_LABELS, riskLabel, riskTier } from "../risk/risk";
 import { groundFinding } from "../validate/grounding";
 import { contextHunks, snippet } from "./context";
 import type { TPrEvent } from "./event";
@@ -112,12 +113,19 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   }
 
   // 4. Fold duplicates, skip what an earlier push already posted, then floor, rank and budget.
+  const grouped = groupFindings(candidates);
   const { fresh, repeats } = dropPosted(
-    groupFindings(candidates),
+    grouped,
     postedFingerprints(await deps.gh.listPostedBodies(pr.number)),
   );
   const { inline, summarized, dropped: underFloor } = rank(fresh);
   dropped += underFloor;
+  // Risk counts every confident finding, including ones an earlier push already posted.
+  const confident = rank(grouped);
+  const risk = riskTier(
+    [...confident.inline, ...confident.summarized].map((f) => f.severity),
+    files,
+  );
 
   const result = ReviewResult.parse({
     mode: "pr",
@@ -127,7 +135,7 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
     author: pr.user.login,
     requestedReviewers: pr.requested_reviewers.map((r) => r.login),
     headSha: pr.head.sha,
-    riskTier: riskFromSeverities([...inline, ...summarized].map((f) => f.severity)),
+    riskTier: risk,
     whatChanged: perFile
       .flatMap((r) => (r?.out.whatChanged ? [r.out.whatChanged] : []))
       .join(" ")
@@ -145,7 +153,21 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   } else {
     await postReview(deps.gh, pr.number, pr.head.sha, result);
   }
+  await labelRisk(deps.gh, pr.number, result.riskTier);
   return result;
+}
+
+/** Exactly one sift:risk-* label. A label failure (e.g. read-only token) never fails the review. */
+async function labelRisk(gh: GitHub, prNumber: number, tier: TRiskTier) {
+  const name = riskLabel(tier);
+  try {
+    await gh.syncLabels(prNumber, {
+      add: { name, color: RISK_LABEL_COLOR[tier], description: `Sift risk tier: ${tier}` },
+      remove: RISK_LABELS.filter((l) => l !== name),
+    });
+  } catch (err) {
+    console.log(`::warning::Could not set ${name}: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**
