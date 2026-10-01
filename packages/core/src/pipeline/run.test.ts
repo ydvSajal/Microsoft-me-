@@ -2,10 +2,12 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { mockModel } from "@sift/ai/mock";
-import type { TModelFinding } from "@sift/shared";
+import type { TCategory, TModelFinding, TReviewResult } from "@sift/shared";
 import { fingerprint } from "@sift/shared/fingerprint";
 import { describe, expect, it } from "vitest";
 import type { PrFile } from "../diff/diff-map";
+import type { PrComment } from "../feedback/collect";
+import { createIngest, type Ingest } from "../ingest/client";
 import { fakeGitHub, prEvent } from "../testing";
 import { runPrReview } from "./run";
 
@@ -495,6 +497,96 @@ describe("stack awareness (feature flag)", () => {
     const r = await result;
     expect(r.stack).toBeUndefined();
     expect(r.stats.skippedReason).toBeUndefined();
+  });
+});
+
+describe("dashboard API (ingest) and feedback", () => {
+  function recordingIngest(opts: { muted?: TCategory[]; down?: boolean } = {}) {
+    const calls: string[] = [];
+    const sent: { review?: TReviewResult; feedback: unknown[] } = { feedback: [] };
+    const ingest: Ingest = {
+      reviewStarted: async () => {
+        calls.push("review-started");
+      },
+      config: async () => {
+        calls.push("config");
+        return opts.muted ?? [];
+      },
+      feedback: async (events) => {
+        calls.push("feedback");
+        sent.feedback.push(...events);
+      },
+      review: async (r) => {
+        calls.push("review");
+        sent.review = r;
+      },
+    };
+    return { ingest, calls, sent };
+  }
+  const priorComment: PrComment = {
+    id: 1,
+    body: `old\n<!-- sift:fp=${"a".repeat(12)} -->`,
+    line: null, // the line has changed since: the author fixed it
+    inReplyTo: null,
+    author: "github-actions[bot]",
+    isBot: true,
+    reactions: { up: 0, down: 0 },
+  };
+  const go = (ingest: Ingest, features = new Set(["feedback"])) => {
+    const { gh, reviews } = fakeGitHub(prFiles, { comments: [priorComment] });
+    const result = runPrReview(
+      {
+        event: prEvent(),
+        workspace: workspace({ "src/checkout.ts": CHECKOUT, "src/broken.ts": ["a", "b"] }),
+      },
+      {
+        gh,
+        reviewModel: reviewModelByFile({ "src/checkout.ts": reviewJson([onDiffBug, nit]) }),
+        judgeModel: mockModel([judgeJson([[onDiffBug, 0.95]])]),
+        features,
+        ingest,
+      },
+    );
+    return { result, reviews };
+  };
+
+  it("reports in TRD §8 order: started, config, feedback, then the result after posting", async () => {
+    const { ingest, calls, sent } = recordingIngest();
+    const { result, reviews } = go(ingest);
+    const r = await result;
+    expect(calls).toEqual(["review-started", "config", "feedback", "review"]);
+    expect(reviews).toHaveLength(1);
+    expect(sent.review).toEqual(r);
+    expect(sent.feedback).toEqual([
+      expect.objectContaining({
+        repo: "ydvSajal/sift-demo-shop",
+        prNumber: 12,
+        fingerprint: "a".repeat(12),
+        outcome: "accepted",
+        source: "line-changed",
+      }),
+    ]);
+  });
+
+  it("skips feedback collection without the flag", async () => {
+    const { ingest, calls } = recordingIngest();
+    await go(ingest, new Set()).result;
+    expect(calls).toEqual(["review-started", "config", "review"]);
+  });
+
+  it("drops low/nit findings of a muted category", async () => {
+    const { ingest } = recordingIngest({ muted: ["style"] });
+    const r = await go(ingest).result;
+    expect([...r.inline, ...r.summarized].map((f) => f.ruleKey)).toEqual(["missing-await"]);
+  });
+
+  it("API down → the review still posts", async () => {
+    const down = createIngest("http://127.0.0.1:9", "s", (async () => {
+      throw new Error("ECONNREFUSED");
+    }) as unknown as typeof fetch);
+    const { result, reviews } = go(down);
+    await expect(result).resolves.toMatchObject({ prNumber: 12 });
+    expect(reviews).toHaveLength(1);
   });
 });
 

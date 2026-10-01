@@ -17,6 +17,8 @@ export const IMPACT_REFS_PER_SYMBOL = 10;
 export const IMPACT_LISTED = 10;
 /** Largest diff `git patch-id` may be fed (bytes). */
 export const PATCH_ID_MAX_BUFFER = 64 * 1024 * 1024;
+/** The web API is optional: a slow or down API never holds up the review. */
+export const INGEST_TIMEOUT_MS = 5000;
 export const SENSITIVE_PATHS = [
   /auth/i,
   /payment|billing|refund/i,

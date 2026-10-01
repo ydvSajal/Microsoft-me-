@@ -15,6 +15,8 @@ import type { GitHub, NewReview } from "../github/client";
 import { groupFindings } from "../dedupe/group";
 import { dropPosted, postedFingerprints } from "../dedupe/posted";
 import { analyzeImpact, type ImpactFinding, impactContext } from "../context/impact";
+import { reportFeedback } from "../feedback/run";
+import type { Ingest } from "../ingest/client";
 import { type Candidate, rank } from "../rank/rank";
 import {
   detectStack,
@@ -49,6 +51,8 @@ export type RunDeps = {
   features?: ReadonlySet<string>;
   /** Identity of a layer's own diff (feature `stack`); default: `git patch-id` in the workspace. */
   patchId?: PatchId;
+  /** The web app (dashboard, feedback, muted categories). Optional; never blocks the review. */
+  ingest?: Ingest;
 };
 
 const WHAT_CHANGED_MAX = 400; // ReviewResult.whatChanged limit
@@ -63,6 +67,14 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   if (!readFile) throw new Error("runPrReview needs a workspace or a readFile dependency");
   const started = performance.now();
   const pr = event.pull_request;
+  const repoFull = `${event.repository.owner.login}/${event.repository.name}`;
+
+  // TRD §8 order: review-started → config → feedback, before any model call.
+  await deps.ingest?.reviewStarted({ repo: repoFull, prNumber: pr.number, headSha: pr.head.sha });
+  const muted = (await deps.ingest?.config(event.repository.owner.login, event.repository.name)) ?? [];
+  if (deps.ingest && deps.features?.has("feedback")) {
+    await reportFeedback(deps.gh, deps.ingest, repoFull, pr.number);
+  }
   const files = await deps.gh.listFiles(pr.number);
   const diffMap = buildDiffMap(files);
   const { review, skipped } = selectFiles(files);
@@ -96,7 +108,9 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   const patchId = stackOn ? (patchOf?.(pr.base.sha, pr.head.sha) ?? undefined) : undefined;
   if (patchId && patchId === lastPatchId(bodiesByPr.get(pr.number) ?? [])) {
     console.log("Sift: this layer's diff is unchanged since the last review, skipping.");
-    return unchangedLayer(event, layers, started);
+    const skippedResult = unchangedLayer(event, layers, started);
+    await deps.ingest?.review(skippedResult);
+    return skippedResult;
   }
 
   // Where the exports this PR changes are used in files it doesn't touch (feature flag `impact`).
@@ -161,10 +175,10 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
   const grouped = groupFindings(candidates);
   // Fingerprints are scoped to the whole stack, so a finding isn't repeated on the next layer.
   const { fresh, repeats } = dropPosted(grouped, postedFingerprints([...bodiesByPr.values()].flat()));
-  const { inline, summarized, dropped: underFloor } = rank(fresh);
+  const { inline, summarized, dropped: underFloor } = rank(fresh, muted);
   dropped += underFloor;
   // Risk counts every confident finding, including ones an earlier push already posted.
-  const confident = rank(grouped);
+  const confident = rank(grouped, muted);
   const risk = riskTier(
     [...confident.inline, ...confident.summarized].map((f) => f.severity),
     files,
@@ -210,6 +224,7 @@ export async function runPrReview({ event, workspace }: RunContext, deps: RunDep
     await postReview(deps.gh, pr.number, pr.head.sha, result, patchId);
   }
   await labelRisk(deps.gh, pr.number, result.riskTier);
+  await deps.ingest?.review(result);
   return result;
 }
 

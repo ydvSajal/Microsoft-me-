@@ -1,5 +1,5 @@
-import type { TFinding } from "@sift/shared";
-import { MAX_INLINE, MIN_CONFIDENCE, SEVERITY_WEIGHT } from "../config";
+import type { TCategory, TFinding } from "@sift/shared";
+import { MAX_INLINE, MIN_CONFIDENCE, MUTABLE_SEVERITIES, SEVERITY_WEIGHT } from "../config";
 import type { Placement } from "../validate/grounding";
 
 export type Candidate = { finding: TFinding; placement: Placement };
@@ -13,16 +13,24 @@ export const byScore = (a: Candidate, b: Candidate) =>
   a.finding.line - b.finding.line;
 
 /**
- * Confidence floor → score → inline budget (TRD §4.3 steps 1, 3, 4).
+ * Confidence floor → muted categories → score → inline budget (TRD §4.3).
+ * A muted category only drops its low/nit findings.
  * Inline = first MAX_INLINE non-nit findings that sit on the diff; everything else is summarized.
- * `dropped` counts findings under the floor.
+ * `dropped` counts findings under the floor or muted.
  */
-export function rank(candidates: readonly Candidate[]): {
+export function rank(
+  candidates: readonly Candidate[],
+  muted: readonly TCategory[] = [],
+): {
   inline: TFinding[];
   summarized: TFinding[];
   dropped: number;
 } {
-  const kept = candidates.filter((c) => c.finding.confidence >= MIN_CONFIDENCE).sort(byScore);
+  const mutable: readonly string[] = MUTABLE_SEVERITIES;
+  const isMuted = (f: TFinding) => muted.includes(f.category) && mutable.includes(f.severity);
+  const kept = candidates
+    .filter((c) => c.finding.confidence >= MIN_CONFIDENCE && !isMuted(c.finding))
+    .sort(byScore);
   const inline: TFinding[] = [];
   const summarized: TFinding[] = [];
   for (const { finding, placement } of kept) {

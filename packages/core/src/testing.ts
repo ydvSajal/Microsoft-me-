@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import type { PrFile } from "./diff/diff-map";
 import type { GitHub, NewReview } from "./github/client";
 import { PrEvent, type TPrEvent } from "./pipeline/event";
+import type { PrComment } from "./feedback/collect";
 import type { OpenPr } from "./stack/stack";
 
 export function loadFixture(name: string): unknown {
@@ -25,6 +26,8 @@ export function fakeGitHub(
     /** Open PRs for stack detection, and what Sift posted on each of the other PRs. */
     openPrs?: OpenPr[];
     postedByPr?: Record<number, string[]>;
+    comments?: PrComment[];
+    resolvedRoots?: number[];
   } = {},
 ) {
   const labels = new Set(opts.labels ?? []);
@@ -33,6 +36,8 @@ export function fakeGitHub(
   const gh: GitHub = {
     listFiles: async () => files,
     listOpenPrs: async () => opts.openPrs ?? [],
+    listComments: async () => opts.comments ?? [],
+    listResolvedThreadRoots: async () => new Set(opts.resolvedRoots ?? []),
     listPostedBodies: async (pr) =>
       opts.postedByPr?.[pr] ?? [
         ...(opts.posted ?? []),
