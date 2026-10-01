@@ -33,7 +33,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 
 | ✓ | ID | Pri | Ticket | Branch | Acceptance criteria |
 |---|---|---|---|---|---|
-| ☐ | **T-11** | P0 | Summary + inline rendering | `feat/t11-render` | `renderSummary` / `renderInline` produce GitHub markdown; friendly copy; severity badges; nits in `<details>`; hidden `sift:fp` / `sift:patch` markers; snapshot tests |
+| ☑ | **T-11** | P0 | Summary + inline rendering | `feat/t11-render` | `renderSummary` / `renderInline` produce GitHub markdown; friendly copy; severity badges; nits in `<details>`; hidden `sift:fp` / `sift:patch` markers; snapshot tests |
 | ☐ | **T-12** | P0 | Rank + budget | `feat/t12-rank` | Score = weight × confidence; ≤7 inline; nits never inline; ordering tests |
 | ☐ | **T-13** | P0 | Dedupe | `feat/t13-dedupe` | Fingerprints + grouping per TRD §4.2; N files → 1 comment with "also in"; re-push posts 0 repeats |
 | ☐ | **T-14** | P0 | Risk tier + labels (**Gate 2**) | `feat/t14-risk` | Tier per TRD §4.4; exactly one `sift:risk-*` label, stale ones removed |
