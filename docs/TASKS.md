@@ -23,7 +23,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 
 | ✓ | ID | Pri | Ticket | Branch | Acceptance criteria |
 |---|---|---|---|---|---|
-| ☐ | **T-06** | P0 | Demo repo `sift-demo-shop` | *(other repo)* `feat/t06-shop` | ~15-file TS shop: `cart.ts`, `checkout.ts`, `auth.ts`, `api/refund.ts`; `sift.yml` from DEPLOYMENT §4 merged first; **then** protect `main` with 1 required approval (the human-approver proof), leaving "include administrators" off so you can still land setup changes; benchmark PRs stay open and are never merged |
+| ☑ | **T-06** | P0 | Demo repo `sift-demo-shop` *(repo secrets and `SIFT_REPO_TOKEN` still to add)* | *(other repo)* `feat/t06-shop` | ~15-file TS shop: `cart.ts`, `checkout.ts`, `auth.ts`, `api/refund.ts`; `sift.yml` from DEPLOYMENT §4 merged first; **then** protect `main` with 1 required approval (the human-approver proof), leaving "include administrators" off so you can still land setup changes; benchmark PRs stay open and are never merged |
 | ☑ | **T-07** | P0 | Diff map | `feat/t07-diff-map` | RIGHT-side added lines per file; renames, deletions, binary files, multi-hunk; ≥6 fixture tests |
 | ☐ | **T-08** | P0 | Action skeleton *(code merged; live check pending: demo repo + key)* | `feat/t08-action` | Posts one `COMMENT` review with stub findings on valid lines, pinned to `commit_id`; skips drafts; fork PRs → log and exit 0 |
 | ☑ | **T-09** | P0 | Judge + quote check | `feat/t09-judge` | Drops findings whose `quotedCode` isn't in the file; judge re-scores confidence; judge failure keeps the original confidence |
@@ -45,7 +45,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 |---|---|---|---|---|---|
 | ☑ | **T-15** | P1 | Stack awareness | `feat/t15-stack` | Base-ref chain detection; unchanged layer (patch-id) → 0 LLM calls; stack-scoped fingerprints; stack risk map in the summary; flag `stack` |
 | ☑ | **T-16** | P1 | Impact analysis | `feat/t16-impact` | ts-morph references to changed exports outside the diff → LLM context + summary list; flag `impact` |
-| ☐ | **T-17** | P0 | Benchmark PRs (10) | `test/t17-bench-set` | On `sift-demo-shop`: 5 seeded-bug PRs, 3 clean refactors (expect 0 comments), 1 nit-heavy PR, 1 three-layer stack with a cross-layer bug; `benchmark/labels.json` merged **before** any run |
+| ☑ | **T-17** | P0 | Benchmark PRs (12: stack counts 3 layers) | `test/t17-bench-set` | On `sift-demo-shop`: 5 seeded-bug PRs, 3 clean refactors (expect 0 comments), 1 nit-heavy PR, 1 three-layer stack with a cross-layer bug; `benchmark/labels.json` merged **before** any run |
 
 ## Oct 5 — web, feedback, numbers (Gate 3: freeze at EOD)
 
