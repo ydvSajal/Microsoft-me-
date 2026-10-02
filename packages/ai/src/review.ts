@@ -3,7 +3,7 @@ import { Category, ModelFinding, Severity, type TModelFinding } from "@sift/shar
 import { generateText, type LanguageModel, NoObjectGeneratedError, Output } from "ai";
 import { z } from "zod";
 import { REVIEW_MAX_ATTEMPTS, REVIEW_TEMPERATURE } from "./config";
-import { getModel } from "./provider";
+import { withFallback } from "./provider";
 
 const INSTRUCTIONS = readFileSync(new URL("./prompts/review.md", import.meta.url), "utf8");
 
@@ -102,18 +102,22 @@ export async function reviewHunks(
   input: ReviewInput,
   deps: { model?: LanguageModel } = {},
 ): Promise<ReviewOutput> {
-  const model = deps.model ?? getModel("review");
   const prompt = buildPrompt(input);
 
   for (let attempt = 1; attempt <= REVIEW_MAX_ATTEMPTS; attempt++) {
     try {
-      const { output } = await generateText({
-        model,
-        instructions: INSTRUCTIONS,
-        prompt,
-        temperature: REVIEW_TEMPERATURE,
-        output: Output.object({ schema: LooseOutput }),
-      });
+      const { output } = await withFallback(
+        "review",
+        (model) =>
+          generateText({
+            model,
+            instructions: INSTRUCTIONS,
+            prompt,
+            temperature: REVIEW_TEMPERATURE,
+            output: Output.object({ schema: LooseOutput }),
+          }),
+        deps,
+      );
       const findings = output.findings.map((f) => toModelFinding(input.file, f));
       const valid = findings.filter((f): f is TModelFinding => f !== null);
       return {

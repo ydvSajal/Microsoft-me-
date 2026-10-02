@@ -3,7 +3,7 @@ import type { TFinding } from "@sift/shared";
 import { generateText, type LanguageModel, Output } from "ai";
 import { z } from "zod";
 import { JUDGE_TEMPERATURE } from "./config";
-import { getModel } from "./provider";
+import { withFallback } from "./provider";
 
 const INSTRUCTIONS = readFileSync(new URL("./prompts/judge.md", import.meta.url), "utf8");
 
@@ -49,13 +49,18 @@ export async function judge(
   if (items.length === 0) return { scores: new Map(), llmCalls: 0 };
   const known = new Set(items.map((i) => i.fingerprint));
   try {
-    const { output } = await generateText({
-      model: deps.model ?? getModel("judge"),
-      instructions: INSTRUCTIONS,
-      prompt: buildPrompt(items),
-      temperature: JUDGE_TEMPERATURE,
-      output: Output.object({ schema: JudgeSchema }),
-    });
+    const { output } = await withFallback(
+      "judge",
+      (model) =>
+        generateText({
+          model,
+          instructions: INSTRUCTIONS,
+          prompt: buildPrompt(items),
+          temperature: JUDGE_TEMPERATURE,
+          output: Output.object({ schema: JudgeSchema }),
+        }),
+      deps,
+    );
     const scores = new Map<string, number>();
     for (const s of output.scores) {
       if (known.has(s.fingerprint) && Number.isFinite(s.confidence)) {
