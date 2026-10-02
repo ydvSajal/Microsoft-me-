@@ -27,24 +27,57 @@ export class ProviderConfigError extends Error {
 
 const isProviderName = (name: string): name is ProviderName => Object.hasOwn(PROVIDERS, name);
 
-/**
- * Model for a role, chosen entirely by env: SIFT_AI_PROVIDER, SIFT_MODEL, SIFT_JUDGE_MODEL
- * (falls back to SIFT_MODEL) and the provider's API key.
- */
-export function getModel(role: ModelRole, env: Env = process.env): LanguageModel {
-  const name = env.SIFT_AI_PROVIDER ?? "";
+function build(providerVar: string, modelVar: string, modelId: string | undefined, env: Env): LanguageModel {
+  const name = env[providerVar] ?? "";
   if (!isProviderName(name)) {
     throw new ProviderConfigError(
-      `SIFT_AI_PROVIDER must be one of: ${PROVIDER_NAMES.join(", ")} (got "${name}")`,
+      `${providerVar} must be one of: ${PROVIDER_NAMES.join(", ")} (got "${name}")`,
     );
   }
   const provider = PROVIDERS[name];
-
-  const modelId = (role === "judge" && env.SIFT_JUDGE_MODEL) || env.SIFT_MODEL;
-  if (!modelId) throw new ProviderConfigError("SIFT_MODEL is not set (the model name to review with)");
+  if (!modelId) throw new ProviderConfigError(`${modelVar} is not set (the model name to review with)`);
 
   const apiKey = env[provider.keyVar];
   if (!apiKey) throw new ProviderConfigError(`${provider.keyVar} is not set (needed for provider "${name}")`);
 
   return provider.create(apiKey, modelId);
+}
+
+/**
+ * Model for a role, chosen entirely by env: SIFT_AI_PROVIDER, SIFT_MODEL, SIFT_JUDGE_MODEL
+ * (falls back to SIFT_MODEL) and the provider's API key.
+ */
+export function getModel(role: ModelRole, env: Env = process.env): LanguageModel {
+  const modelId = (role === "judge" && env.SIFT_JUDGE_MODEL) || env.SIFT_MODEL;
+  return build("SIFT_AI_PROVIDER", "SIFT_MODEL", modelId, env);
+}
+
+/** Optional second model for both roles: SIFT_FALLBACK_PROVIDER + SIFT_FALLBACK_MODEL. Unset = none. */
+export function getFallbackModel(env: Env = process.env): LanguageModel | undefined {
+  if (!env.SIFT_FALLBACK_PROVIDER) return undefined;
+  return build("SIFT_FALLBACK_PROVIDER", "SIFT_FALLBACK_MODEL", env.SIFT_FALLBACK_MODEL, env);
+}
+
+/**
+ * Runs `run` on the primary model; if it throws (outage, quota, auth, rate limit) and a fallback
+ * is configured, runs it once more on the fallback. An injected `deps.model` (tests) skips both.
+ */
+export async function withFallback<T>(
+  role: ModelRole,
+  run: (model: LanguageModel) => Promise<T>,
+  deps: { model?: LanguageModel } = {},
+  env: Env = process.env,
+): Promise<T> {
+  if (deps.model) return run(deps.model);
+  const primary = getModel(role, env);
+  const fallback = getFallbackModel(env);
+  if (!fallback) return run(primary);
+  try {
+    return await run(primary);
+  } catch (err) {
+    console.warn(
+      `sift: primary ${role} model failed (${err instanceof Error ? err.name : "error"}), using fallback`,
+    );
+    return run(fallback);
+  }
 }
