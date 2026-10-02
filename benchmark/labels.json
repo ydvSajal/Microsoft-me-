@@ -1,0 +1,115 @@
+{
+  "repo": "ydvSajal/sift-demo-shop",
+  "prs": [
+    {
+      "pr": 1,
+      "kind": "seeded-bug",
+      "bugs": [
+        {
+          "file": "src/checkout.ts",
+          "line": 17,
+          "note": "Card is charged before stock is reserved; if reserve() throws for out-of-stock, the customer is charged with no order and no refund.",
+          "lineEnd": 20
+        }
+      ],
+      "acceptable": []
+    },
+    {
+      "pr": 2,
+      "kind": "seeded-bug",
+      "bugs": [
+        {
+          "file": "src/api/refund.ts",
+          "line": 18,
+          "note": "Compares against the full order total instead of the remaining refundable amount, so repeated refunds can exceed what was paid."
+        }
+      ],
+      "acceptable": []
+    },
+    {
+      "pr": 3,
+      "kind": "seeded-bug",
+      "bugs": [
+        {
+          "file": "src/auth.ts",
+          "line": 27,
+          "note": "Replaces the constant-time comparison with !==, leaking timing information about the password hash."
+        }
+      ],
+      "acceptable": []
+    },
+    {
+      "pr": 4,
+      "kind": "seeded-bug",
+      "bugs": [
+        {
+          "file": "src/inventory.ts",
+          "line": 12,
+          "note": "The stock check was removed, so reserve() can drive stock negative and oversell."
+        }
+      ],
+      "acceptable": []
+    },
+    {
+      "pr": 5,
+      "kind": "seeded-bug",
+      "bugs": [
+        {
+          "file": "src/checkout.ts",
+          "line": 21,
+          "note": "Reserved stock is never released when the payment is declined (nothing else releases it), so stock leaks permanently.",
+          "lineEnd": 22
+        }
+      ],
+      "acceptable": []
+    },
+    {
+      "pr": 6,
+      "kind": "clean-refactor",
+      "bugs": [],
+      "acceptable": []
+    },
+    {
+      "pr": 7,
+      "kind": "clean-refactor",
+      "bugs": [],
+      "acceptable": []
+    },
+    {
+      "pr": 8,
+      "kind": "clean-refactor",
+      "bugs": [],
+      "acceptable": []
+    },
+    {
+      "pr": 9,
+      "kind": "nit-heavy",
+      "bugs": [],
+      "acceptable": []
+    },
+    {
+      "pr": 10,
+      "kind": "stack",
+      "bugs": [],
+      "acceptable": []
+    },
+    {
+      "pr": 11,
+      "kind": "stack",
+      "bugs": [
+        {
+          "file": "src/cart.ts",
+          "line": 31,
+          "note": "bulkRate (layer 1) returns a whole percent (10 = 10%), but it is used here as a fraction: 1 - 10 = -9, so bulk lines produce negative totals. Visible only across layers 1 and 2."
+        }
+      ],
+      "acceptable": []
+    },
+    {
+      "pr": 12,
+      "kind": "stack",
+      "bugs": [],
+      "acceptable": []
+    }
+  ]
+}
