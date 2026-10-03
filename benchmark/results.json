@@ -1,0 +1,24 @@
+{
+  "sift": {
+    "precision": 0.6666666666666666,
+    "recall": 0.6666666666666666,
+    "inlinePerPr": 0,
+    "offDiff": 0,
+    "duplicates": 0,
+    "cleanComments": 1,
+    "rerunPosted": 0,
+    "rerunLlmCalls": 0,
+    "latencyMs": 16751.5
+  },
+  "naive": {
+    "precision": 0.3333333333333333,
+    "recall": 0.5,
+    "inlinePerPr": 1,
+    "offDiff": 6,
+    "duplicates": 0,
+    "cleanComments": 1,
+    "rerunPosted": 4,
+    "rerunLlmCalls": 3,
+    "latencyMs": 10977.5
+  }
+}
