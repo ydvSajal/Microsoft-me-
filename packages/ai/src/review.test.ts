@@ -76,6 +76,8 @@ describe("reviewHunks", () => {
   });
 });
 
+const quoteOf = () => finding.quotedCode;
+
 describe("toModelFinding", () => {
   it("repairs casing and overlong text before validating", () => {
     const f = toModelFinding("a.ts", {
@@ -89,6 +91,15 @@ describe("toModelFinding", () => {
     expect(f?.title).toHaveLength(80);
     expect(f?.confidence).toBe(1);
     expect(f?.line).toBe(39);
+  });
+
+  it("keeps the finding but drops an unusable fix", () => {
+    for (const suggestion of ["", quoteOf(), "const total = (await cart.getTotal();"]) {
+      const f = toModelFinding("a.ts", { ...finding, suggestion });
+      expect(f).not.toBeNull();
+      expect(f?.suggestion).toBeUndefined();
+    }
+    expect(toModelFinding("a.ts", finding)?.suggestion).toBe(finding.suggestion);
   });
 
   it("rejects what can't be repaired", () => {

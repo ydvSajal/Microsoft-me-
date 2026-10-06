@@ -99,6 +99,17 @@ Built on the web app's existing token-gated pages. The Connect page uses a serve
 | ☐ | **T-38** | GitHub listing + queue API *(offline-tested with a fake GitHub and fake DB; live check pending: `SIFT_GITHUB_TOKEN` in Vercel)* | `feat/t38-queue-api` | `GET /api/github/repos`, `POST /api/queue` (`repos[]` or `all`), `GET /api/queue`: passcode-authed, zod, 1 MB cap, typed errors; 503 when `SIFT_GITHUB_TOKEN` is unset; re-queuing the same PR at the same sha is skipped; token never logged |
 | ☐ | **T-39** | Connect repos page *(selection logic unit-tested, page renders; live check pending: `SIFT_GITHUB_TOKEN` in Vercel)* | `feat/t39-connect-page` | `/connect` lists repos with search and select-all, queues the selection and shows job status; a clear note that jobs stay Queued until the worker (T-33) exists |
 
+## Demo polish (Kodus-inspired, after the freeze)
+
+Ideas only from the Kodus review engine (AGPL: no code is copied). All on the single-file flow; no API or schema change.
+
+| ✓ | ID | Ticket | Branch | Acceptance criteria |
+|---|---|---|---|---|
+| ☑ | **T-41** | Fix quality gate | `feat/t41-usable-fix` | `isUsableFix` rejects empty, whitespace-identical, unbalanced (brackets, strings, templates, comments) and diff-hunk fixes; fragment quotes may get fragment fixes; `toModelFinding` drops an unusable `suggestion` but keeps the finding |
+| ☐ | **T-42** | Severity definitions | `feat/t42-severity-defs` | One `SEVERITY_DEFINITIONS` constant feeds the review prompt (test guards drift), badge tooltips and a "What do severities mean?" legend |
+| ☐ | **T-43** | Copy fix prompt | `feat/t43-fix-prompt` | Per-finding and per-file "Copy prompt" produce a self-contained prompt (file, line, severity, problem, fix) for Cursor or Claude Code |
+| ☐ | **T-44** | Showcase reviews | `feat/t44-showcase` | Example buttons on `/review` show a recorded review instantly with no model or passcode; a test checks every snapshot parses and every `quotedCode` occurs in its file |
+
 ## Cut order if a gate slips
 
 1. All P3 (T-23 … T-27)

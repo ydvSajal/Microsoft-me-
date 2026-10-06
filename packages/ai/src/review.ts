@@ -4,6 +4,7 @@ import { generateText, type LanguageModel, NoObjectGeneratedError, Output } from
 import { z } from "zod";
 import { REVIEW_MAX_ATTEMPTS, REVIEW_TEMPERATURE } from "./config";
 import { withFallback } from "./provider";
+import { isUsableFix } from "./usable-fix";
 
 const INSTRUCTIONS = readFileSync(new URL("./prompts/review.md", import.meta.url), "utf8");
 
@@ -63,7 +64,8 @@ export function toModelFinding(file: string, f: TLooseFinding): TModelFinding | 
     ruleKey,
     title: clip(f.title, 80),
     body: clip(f.body, 600),
-    suggestion: f.suggestion ? clip(f.suggestion, 600) : undefined,
+    // An empty, unchanged or cut-off fix is dropped; the finding itself stays.
+    suggestion: isUsableFix(f.quotedCode, f.suggestion) ? clip(f.suggestion as string, 600) : undefined,
     quotedCode: f.quotedCode.slice(0, 400),
     confidence: Math.min(1, Math.max(0, f.confidence)),
   });
