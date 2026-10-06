@@ -3,25 +3,58 @@ import Link from "next/link";
 import { DbUnavailable, EmptyState, Page, PageHeader, Panel } from "@/components/ui";
 import { SiteNav } from "@/components/site-nav";
 import { listRepos, tryQuery } from "@/lib/queries";
+import { getUser } from "@/lib/session";
 import { ago } from "@/lib/view";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Dashboard" };
 
-export default async function Dashboard() {
-  const repos = await tryQuery(listRepos);
+export default async function Dashboard({ searchParams }: PageProps<"/dashboard">) {
+  const user = await getUser();
+  const mine = !!user && (await searchParams).mine === "1";
+  const repos = await tryQuery(() => listRepos(mine ? user.id : undefined));
   return (
     <>
       <SiteNav current="/dashboard" />
       <Page className="pb-16">
-        <PageHeader title="Repositories" meta="Every repo the Sift Action has reported a review for." />
+        <PageHeader
+          title="Repositories"
+          meta={mine ? "The repos you watch." : "Every repo the Sift Action has reported a review for."}
+        />
+        {user && (
+          <nav aria-label="Filter" className="-mt-2 mb-6 flex gap-1 text-sm">
+            {[
+              ["All repos", "/dashboard", !mine],
+              ["My repos", "/dashboard?mine=1", mine],
+            ].map(([label, href, on]) => (
+              <Link
+                key={String(href)}
+                href={String(href)}
+                aria-current={on ? "page" : undefined}
+                className={`rounded-control px-3 py-1.5 ${on ? "bg-surface-2 text-text" : "text-muted hover:text-text"}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        )}
         {!repos.ok ? (
           <DbUnavailable />
         ) : repos.data.length === 0 ? (
-          <EmptyState title="No reviews yet">
-            Add the Sift workflow to a repository and open a pull request. Its review shows up here once the
-            Action posts it.
-          </EmptyState>
+          mine ? (
+            <EmptyState title="You aren't watching any reviewed repos yet">
+              Pick repositories on{" "}
+              <Link href="/connect" className="text-accent hover:underline">
+                Connect repos
+              </Link>
+              . They show up here once the Sift Action reports a review for them.
+            </EmptyState>
+          ) : (
+            <EmptyState title="No reviews yet">
+              Add the Sift workflow to a repository and open a pull request. Its review shows up here once the
+              Action posts it.
+            </EmptyState>
+          )
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">
             {repos.data.map((repo) => {

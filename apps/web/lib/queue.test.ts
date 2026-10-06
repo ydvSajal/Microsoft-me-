@@ -16,7 +16,14 @@ const pr = (number: number, over: Partial<GitHubPr> = {}): GitHubPr => ({
 function fakeDb() {
   const repos = new Map<string, { id: string; enabled: boolean }>();
   const jobs = new Map<string, { repoId: string; prNumber: number; headSha: string; title: string }>();
+  const watches = new Set<string>();
   const db = {
+    userRepo: {
+      createMany: async ({ data }: { data: { userId: string; repoId: string }[] }) => {
+        for (const d of data) watches.add(`${d.userId}:${d.repoId}`);
+        return { count: data.length };
+      },
+    },
     repo: {
       upsert: async ({
         where,
@@ -48,8 +55,8 @@ function fakeDb() {
         return { count };
       },
     },
-  } as unknown as Pick<PrismaClient, "repo" | "reviewJob">;
-  return { db, repos, jobs };
+  } as unknown as Pick<PrismaClient, "repo" | "reviewJob" | "userRepo">;
+  return { db, repos, jobs, watches };
 }
 
 const github = (prsByRepo: Record<string, GitHubPr[] | Error>) => ({
@@ -133,5 +140,17 @@ describe("queueRepos", () => {
     );
     const out = await queueRepos(db, github(many), { all: true });
     expect(out.truncated).toBe(true);
+  });
+
+  it("adds picked repos to the signed-in user's watch list, even with no open PRs", async () => {
+    const { db, watches } = fakeDb();
+    await queueRepos(db, github({ "a/one": [pr(1)], "a/two": [] }), { repos: ["a/one", "a/two"] }, "u1");
+    expect([...watches].sort()).toEqual(["u1:id-1", "u1:id-2"]);
+  });
+
+  it("watches nothing without a user", async () => {
+    const { db, watches } = fakeDb();
+    await queueRepos(db, github({ "a/one": [pr(1)] }), { repos: ["a/one"] });
+    expect(watches.size).toBe(0);
   });
 });

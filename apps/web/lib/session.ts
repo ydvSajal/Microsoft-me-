@@ -4,6 +4,8 @@ import { cache } from "react";
 import { newToken, sha256, unseal } from "./auth";
 import { SESSION_COOKIE, SESSION_DAYS } from "./config";
 import { db } from "./db";
+import type { User } from "./generated/prisma/client";
+import { requirePasscode } from "./http";
 
 const DAY_MS = 86_400_000;
 
@@ -21,8 +23,16 @@ export async function createSession(userId: string) {
 }
 
 /** The signed-in user, or null. Never throws: a DB outage reads as "signed out". Cached per request. */
-export const getUser = cache(async () => {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+export const getUser = cache(async () => userByToken((await cookies()).get(SESSION_COOKIE)?.value));
+
+/** Same, for route handlers: reads the cookie off the Request, so tests need no Next request scope. */
+export function userFromRequest(req: Request) {
+  const raw = req.headers.get("cookie") ?? "";
+  const m = raw.split(/;\s*/).find((c) => c.startsWith(`${SESSION_COOKIE}=`));
+  return userByToken(m?.slice(SESSION_COOKIE.length + 1)); // base64url: nothing to decode
+}
+
+async function userByToken(token: string | undefined) {
   if (!token) return null;
   try {
     const s = await db().session.findUnique({ where: { tokenHash: sha256(token) }, include: { user: true } });
@@ -31,7 +41,7 @@ export const getUser = cache(async () => {
     console.error("session lookup failed:", err instanceof Error ? err.message : String(err));
     return null;
   }
-});
+}
 
 export async function destroySession() {
   const jar = await cookies();
@@ -44,6 +54,21 @@ export async function destroySession() {
 export function githubTokenOf(user: { githubToken: string | null }): string | null {
   const secret = process.env.SIFT_AUTH_SECRET;
   return user.githubToken && secret ? unseal(user.githubToken, secret) : null;
+}
+
+/**
+ * Access for the Connect APIs: a signed-in user, or the demo passcode as before.
+ * GitHub reads use the user's own token when linked, else the server's SIFT_GITHUB_TOKEN.
+ */
+export async function connectAccess(
+  req: Request,
+): Promise<{ denied: Response } | { user: User | null; token: string | undefined }> {
+  const user = await userFromRequest(req);
+  if (!user) {
+    const denied = requirePasscode(req);
+    if (denied) return { denied };
+  }
+  return { user, token: (user && githubTokenOf(user)) ?? process.env.SIFT_GITHUB_TOKEN };
 }
 
 /** "Signed in as …" label. */

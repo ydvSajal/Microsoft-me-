@@ -33,9 +33,11 @@ export type QueueResult = {
  * Add bounded parallelism if the page ever needs more than that in one request.
  */
 export async function queueRepos(
-  db: Pick<PrismaClient, "repo" | "reviewJob">,
+  db: Pick<PrismaClient, "repo" | "reviewJob" | "userRepo">,
   gh: QueueGitHub,
   input: QueueInputT,
+  /** When signed in, picked repos also go on this user's watch list (T-46). */
+  userId?: string,
 ): Promise<QueueResult> {
   let names: string[];
   let truncated = false;
@@ -64,6 +66,7 @@ export async function queueRepos(
       update: { enabled: true },
       select: { id: true },
     });
+    if (userId) await db.userRepo.createMany({ data: [{ userId, repoId: repo.id }], skipDuplicates: true });
     const made = await db.reviewJob.createMany({
       data: open.map((p) => ({ repoId: repo.id, prNumber: p.number, title: p.title, headSha: p.headSha })),
       skipDuplicates: true,
