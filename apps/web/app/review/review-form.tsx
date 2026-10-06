@@ -1,9 +1,12 @@
 "use client";
 
-import type { TReviewResult } from "@sift/shared";
-import { useState } from "react";
+import type { TFinding, TReviewResult } from "@sift/shared";
+import { useRef, useState } from "react";
+import { FixPanel, RiskButton } from "@/components/fix-panel";
 import { ReviewCard } from "@/components/review-card";
 import { Panel, Skeleton } from "@/components/ui";
+import { UPLOAD_EXTENSIONS, UPLOAD_MAX_BYTES } from "@/lib/config";
+import { applyAll, applySuggestion, fixable } from "@/lib/fixes";
 
 type ApiError = { error: { code: string; message: string; fields?: Record<string, string[]> } };
 type State =
@@ -15,12 +18,50 @@ type State =
 const input =
   "w-full rounded-control border border-line bg-surface px-3 py-2 text-sm text-text placeholder:text-faint focus:border-accent";
 
+const countLines = (s: string) => (s ? s.replace(/\r?\n$/, "").split(/\r?\n/).length : 0);
+
 export function ReviewForm({ maxLines }: { maxLines: number }) {
   const [state, setState] = useState<State>({ kind: "idle" });
-  const [lines, setLines] = useState(0);
+  const [filename, setFilename] = useState("src/checkout.ts");
+  const [content, setContent] = useState("");
+  const [uploadNote, setUploadNote] = useState<{ text: string; bad: boolean } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [fixesOpen, setFixesOpen] = useState(false);
+  const [applied, setApplied] = useState<ReadonlySet<string>>(new Set());
+  const [fixMessage, setFixMessage] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const lines = countLines(content);
+
+  async function loadFile(file: File | undefined) {
+    if (!file) return;
+    if (!UPLOAD_EXTENSIONS.test(file.name))
+      return setUploadNote({ text: `${file.name} isn't a .ts, .tsx, .js or .jsx file.`, bad: true });
+    if (file.size > UPLOAD_MAX_BYTES)
+      return setUploadNote({
+        text: `${file.name} is too large. Sift reviews up to ${maxLines} lines.`,
+        bad: true,
+      });
+    try {
+      const text = await file.text();
+      const n = countLines(text);
+      setFilename(file.name);
+      setContent(text);
+      setUploadNote(
+        n > maxLines
+          ? { text: `${file.name} has ${n} lines. Trim it to ${maxLines} or fewer.`, bad: true }
+          : { text: `Loaded ${file.name} (${n} lines).`, bad: false },
+      );
+    } catch {
+      setUploadNote({ text: "Couldn't read that file.", bad: true });
+    }
+  }
 
   async function submit(form: FormData) {
     setState({ kind: "loading" });
+    setApplied(new Set());
+    setFixesOpen(false);
+    setFixMessage("");
     try {
       const res = await fetch("/api/review-file", {
         method: "POST",
@@ -28,7 +69,7 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
           "content-type": "application/json",
           "x-sift-passcode": String(form.get("passcode") ?? ""),
         },
-        body: JSON.stringify({ filename: form.get("filename"), content: form.get("content") }),
+        body: JSON.stringify({ filename, content }),
       });
       const body = (await res.json()) as TReviewResult | ApiError;
       if ("error" in body) {
@@ -38,6 +79,31 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
     } catch {
       setState({ kind: "error", message: "Couldn't reach Sift. Check your connection and try again." });
     }
+  }
+
+  function applyOne(f: TFinding) {
+    const res = applySuggestion(content, f.quotedCode, f.suggestion ?? "");
+    if (!res.ok) {
+      setFixMessage(
+        res.reason === "ambiguous"
+          ? `Line ${f.line}: that code appears more than once, so nothing was changed.`
+          : `Line ${f.line} has changed since the review, so nothing was changed. Review again.`,
+      );
+      return;
+    }
+    setContent(res.content);
+    setApplied((prev) => new Set(prev).add(f.fingerprint));
+    setFixMessage("");
+  }
+
+  function applyEvery(fixes: TFinding[]) {
+    const out = applyAll(
+      content,
+      fixes.filter((f) => !applied.has(f.fingerprint)),
+    );
+    setContent(out.content);
+    setApplied((prev) => new Set([...prev, ...out.applied]));
+    setFixMessage(out.skipped.length ? `${out.skipped.length} fix(es) skipped: the code has changed.` : "");
   }
 
   const fieldError = (name: string) =>
@@ -51,12 +117,49 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
     <div className="grid gap-6 lg:grid-cols-2">
       <Panel className="p-4 md:p-5">
         <form
+          ref={formRef}
           className="grid gap-4"
           onSubmit={(e) => {
-            e.preventDefault(); // keep the pasted code on screen (a form action would reset the fields)
+            e.preventDefault(); // keep the code on screen (a form action would reset the fields)
             void submit(new FormData(e.currentTarget));
           }}
         >
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              void loadFile(e.dataTransfer.files[0]);
+            }}
+            className={`grid gap-1 rounded-panel border border-dashed px-4 py-5 text-center text-sm transition ${
+              dragging ? "border-accent bg-accent-soft" : "border-line bg-bg hover:border-accent"
+            }`}
+          >
+            <span className="text-text">
+              <span className="font-medium">Drop a file here</span> or{" "}
+              <span className="font-medium text-accent underline underline-offset-2">choose a file</span>
+            </span>
+            <span className={`text-xs ${uploadNote?.bad ? "text-risk-high" : "text-muted"}`}>
+              {uploadNote?.text ?? "The file is read in your browser and sent only when you press Review."}
+            </span>
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".ts,.tsx,.mts,.cts,.js,.jsx,.mjs,.cjs"
+            hidden
+            onChange={(e) => {
+              void loadFile(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid content-start gap-2">
               <label htmlFor="passcode" className="text-sm font-medium text-text">
@@ -80,7 +183,8 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
                 id="filename"
                 name="filename"
                 required
-                defaultValue="src/checkout.ts"
+                value={filename}
+                onChange={(e) => setFilename(e.target.value)}
                 aria-describedby="filename-error"
                 className={`${input} font-mono`}
               />
@@ -102,10 +206,9 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
               required
               rows={18}
               spellCheck={false}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               aria-describedby="content-error"
-              onChange={(e) =>
-                setLines(e.target.value ? e.target.value.replace(/\r?\n$/, "").split(/\r?\n/).length : 0)
-              }
               className={`${input} resize-y font-mono text-xs leading-relaxed`}
             />
             {fieldError("content")}
@@ -124,7 +227,7 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
         {state.kind === "idle" && (
           <Panel className="flex h-full min-h-64 items-center justify-center p-8 text-center">
             <p className="max-w-[40ch] text-sm leading-relaxed text-muted">
-              The review shows up here: risk tier, ranked findings, and how many were dropped as unverified.
+              The review shows up here: risk tier, ranked findings, and the fixes Sift suggests.
             </p>
           </Panel>
         )}
@@ -142,7 +245,39 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
             <p className="text-sm font-medium text-risk-high">{state.message}</p>
           </Panel>
         )}
-        {state.kind === "done" && <ReviewCard result={state.result} title="Your file" />}
+        {state.kind === "done" &&
+          (() => {
+            const fixes = fixable(state.result);
+            const pending = fixes.filter((f) => !applied.has(f.fingerprint)).length;
+            return (
+              <ReviewCard
+                result={state.result}
+                title={filename}
+                riskSlot={
+                  <RiskButton
+                    tier={state.result.riskTier}
+                    open={fixesOpen}
+                    pending={pending}
+                    onToggle={() => setFixesOpen((o) => !o)}
+                  />
+                }
+                belowHeader={
+                  fixesOpen && (
+                    <FixPanel
+                      fixes={fixes}
+                      applied={applied}
+                      filename={filename}
+                      content={content}
+                      message={fixMessage}
+                      onApply={applyOne}
+                      onApplyAll={() => applyEvery(fixes)}
+                      onRereview={() => formRef.current?.requestSubmit()}
+                    />
+                  )
+                }
+              />
+            );
+          })()}
       </div>
     </div>
   );
