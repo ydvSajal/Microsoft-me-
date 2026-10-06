@@ -50,6 +50,7 @@ model Repo {
   prs       PullRequest[]
   stats     CategoryStat[]
   jobs      ReviewJob[]
+  watchers  UserRepo[]
 
   @@unique([owner, name])
 }
@@ -133,14 +134,40 @@ model CategoryStat {
   @@unique([repoId, category])
 }
 
+/// An account: email + password, GitHub sign-in, or both (T-45).
 model User {
-  id             String    @id @default(cuid())
-  githubLogin    String    @unique
-  telegramChatId String?   @unique
-  linkToken      String?   @unique
-  roastMode      Boolean   @default(false)
+  id             String     @id @default(cuid())
+  email          String?    @unique // stored lowercased
+  passwordHash   String? // scrypt "salt:hash", hex
+  githubId       Int?       @unique
+  githubLogin    String?    @unique
+  githubToken    String? // AES-256-GCM sealed OAuth token, never plain
+  telegramChatId String?    @unique
+  linkToken      String?    @unique
+  roastMode      Boolean    @default(false)
   snoozedUntil   DateTime?
+  createdAt      DateTime   @default(now())
   devices        Device[]
+  sessions       Session[]
+  watches        UserRepo[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique // sha256 of the cookie value
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+}
+
+/// Repos a user watches: their buddy mood and Telegram pings come from these (T-46).
+model UserRepo {
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repoId String
+  repo   Repo   @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@id([userId, repoId])
 }
 
 model Device {

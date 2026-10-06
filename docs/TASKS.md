@@ -62,18 +62,25 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 |---|---|---|---|---|---|
 | ☐ | **T-22** | P0 | Demo runbook *(done; backup video and hotspot run skipped by decision 2026-10-07)* | `docs/t22-demo` | Full dry run on the phone hotspot; `docs/SUPPORT.md` §3 matches reality; backup video recorded and stored offline; Day-1 deck updated with the benchmark table |
 
+## Oct 7 — buddy, accounts, Telegram (un-parked 2026-10-07)
+
+One PR each, in this order. The schema and `BuddyState` counts ship first (`feat/t26-buddy-account-schema`).
+
+| ✓ | ID | Ticket | Branch | Acceptance criteria |
+|---|---|---|---|---|
+| ☐ | **T-26** | Web buddy | `feat/t26-buddy` | `computeBuddyState()` per TRD §6 with tests; `GET /api/buddy` (session user's watched repos, else all); floating character on every page with 7 moods, a status panel and demo mood chips; reacts to the `/review` result. `/ack` waits for the firmware |
+| ☐ | **T-45** | Accounts | `feat/t45-auth` | Email + password sign-up/login (scrypt, hashed session cookie, cap `MAX_ACCOUNTS`); Sign in with GitHub (OAuth App, state cookie, token sealed at rest); `/connect` and `/settings` need login |
+| ☐ | **T-46** | Watched repos | `feat/t46-watch` | `/connect` lists the user's GitHub repos and saves picks as `UserRepo`; dashboard "My repos" filter |
+| ☐ | **T-25** | Telegram pings | `feat/t25-telegram` | One app bot; `/settings` deep link `/start <linkToken>`; webhook with secret check; every ingested review pings watchers (risk, top findings, suggestion); snooze; never fails the ingest |
+
 ## P3 — parked (not part of the Oct 8 demo)
 
-Decision 2026-10-07: T-23..T-27 are out of scope for the finale. No code exists for them beyond a few schema fields. Revisit after the hackathon.
-
-Each is independent, behind a flag, and cut without discussion if time is short.
+Decision 2026-10-07: T-23, T-24 and T-27 are out of scope for the finale. Revisit after the hackathon.
 
 | ✓ | ID | Ticket | Branch | Acceptance criteria |
 |---|---|---|---|---|
 | ☐ | **T-23** | Auto-mute | `feat/t23-auto-mute` | LOW/NIT category with ≥10 samples and <30% precision is muted; shown on the dashboard |
 | ☐ | **T-24** | Convention mining | `feat/t24-conventions` | 5 AST patterns; ≥80% of ≥20 samples; written to `.github/copilot-instructions.md`; flag `conventions` |
-| ☐ | **T-25** | Telegram bot | `feat/t25-telegram` | grammY webhook with secret check; `/start <login> <token>`; pings only for high risk, critical, or waiting > `WAIT_HOURS` |
-| ☐ | **T-26** | Buddy mood + route | `feat/t26-buddy-route` | `computeBuddyState()` per TRD §6 with tests; `GET /api/buddy`, `POST /api/buddy/ack` |
 | ☐ | **T-27** | Buddy firmware | `feat/t27-buddy-fw` | ESP32-S3 renders 7 moods at ~30 fps (network core 0, render core 1); button ack/snooze; long-press demo mode; `firmware-build` green |
 
 ## Post-hackathon — GitHub App (after Oct 8)
