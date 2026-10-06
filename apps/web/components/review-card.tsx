@@ -1,10 +1,22 @@
 import type { TReviewResult } from "@sift/shared";
+import type { ReactNode } from "react";
 import { duration, fromFinding } from "@/lib/view";
 import { FindingList, Inline, Panel, RiskBadge } from "./ui";
 
 /** A review result as Sift shows it: risk, what changed, and the ranked findings. Used on the
  *  landing page (real fixture data), the paste page and anywhere a ReviewResult is at hand. */
-export function ReviewCard({ result, title }: { result: TReviewResult; title?: string }) {
+export function ReviewCard({
+  result,
+  title,
+  riskSlot,
+  belowHeader,
+}: {
+  result: TReviewResult;
+  title?: string;
+  /** Replaces the static risk badge (the paste page puts the clickable fixes button here). */
+  riskSlot?: ReactNode;
+  belowHeader?: ReactNode;
+}) {
   const findings = [
     ...result.inline.map((f) => fromFinding(f, result.mode === "pr" ? "inline" : undefined)),
     ...result.summarized.map((f) => fromFinding(f, result.mode === "pr" ? "summary" : undefined)),
@@ -22,8 +34,9 @@ export function ReviewCard({ result, title }: { result: TReviewResult; title?: s
             </p>
           )}
         </div>
-        <RiskBadge tier={result.riskTier} />
+        {riskSlot ?? <RiskBadge tier={result.riskTier} />}
       </div>
+      {belowHeader}
       <FindingList findings={findings} empty="Nothing to flag. Sift stays quiet when the code is fine." />
       <p className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-4 py-2.5 font-mono text-xs text-faint">
         <span>{result.inline.length} ranked</span>

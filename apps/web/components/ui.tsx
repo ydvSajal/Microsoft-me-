@@ -90,7 +90,7 @@ export function ButtonLink({
   );
 }
 
-const RISK_STYLE: Record<TRiskTier, string> = {
+export const RISK_STYLE: Record<TRiskTier, string> = {
   high: "bg-risk-high-soft text-risk-high",
   medium: "bg-risk-medium-soft text-risk-medium",
   low: "bg-risk-low-soft text-risk-low",
