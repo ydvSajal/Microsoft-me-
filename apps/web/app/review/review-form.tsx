@@ -1,7 +1,7 @@
 "use client";
 
 import type { TFinding, TReviewResult } from "@sift/shared";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FixPanel, RiskButton } from "@/components/fix-panel";
 import { ReviewCard } from "@/components/review-card";
 import { Panel, Skeleton } from "@/components/ui";
@@ -34,6 +34,13 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const lines = countLines(content);
+
+  // Tell the buddy (components/buddy.tsx) how this file went.
+  useEffect(() => {
+    if (state.kind !== "done") return;
+    const detail = [...state.result.inline, ...state.result.summarized];
+    window.dispatchEvent(new CustomEvent("sift:review", { detail }));
+  }, [state]);
 
   async function loadFile(file: File | undefined) {
     if (!file) return;
