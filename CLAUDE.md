@@ -16,6 +16,9 @@ Tickets T-41..T-44 in `docs/TASKS.md`, one PR each, in order:
 Gotcha: when Gemini is slow or rate-limited the fallback model (free OpenRouter) often returns findings with no `suggestion`; check which model produced a recording.
 Later: GitHub login + repo selection (T-34/T-31), team rules in plain English.
 
+## Parked (not for the Oct 8 demo)
+T-23..T-27 (auto-mute, convention mining, Telegram bot, buddy route and firmware). Don't start them. Only a few unused schema fields exist.
+
 ## Rules of thumb
 - Wait for each PR to merge before branching the next; ship with `scripts/ship.sh` (stash untracked files first: `git stash -u`).
 - Previews never run `prisma migrate deploy` (production builds only).

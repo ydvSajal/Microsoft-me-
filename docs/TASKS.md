@@ -62,7 +62,9 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 |---|---|---|---|---|---|
 | ☐ | **T-22** | P0 | Demo runbook + backup video | `docs/t22-demo` | Full dry run on the phone hotspot; `docs/SUPPORT.md` §3 matches reality; backup video recorded and stored offline; Day-1 deck updated with the benchmark table |
 
-## P3 — only if every gate was met on time
+## P3 — parked (not part of the Oct 8 demo)
+
+Decision 2026-10-07: T-23..T-27 are out of scope for the finale. No code exists for them beyond a few schema fields. Revisit after the hackathon.
 
 Each is independent, behind a flag, and cut without discussion if time is short.
 
