@@ -17,11 +17,13 @@ Fewer, correct findings beat many weak ones. If the code is fine, return an empt
 
 ## Severity
 
-- `critical`: data loss, security hole, or a crash/wrong result on a common path
-- `high`: likely bug or breaking change
-- `medium`: real problem on an uncommon path, or a notable performance issue
-- `low`: naming, clarity, minor robustness
-- `nit`: pure style preference
+Severity is about impact on users and data, not about how sure you are.
+
+- `critical`: Crash or downtime, data loss or corruption, or a security breach on a common path.
+- `high`: An important feature is broken, or a leak or slowdown users will notice.
+- `medium`: Partly broken, slow only in specific cases, or wrong but recoverable data.
+- `low`: Minor overhead, wrong logs or metrics, rare edge cases, or unclear naming.
+- `nit`: Style preference only. No effect on behaviour.
 
 Severity must match impact. If unsure, choose the lower severity and lower your `confidence`.
 

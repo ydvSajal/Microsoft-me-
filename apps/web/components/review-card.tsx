@@ -1,4 +1,4 @@
-import type { TReviewResult } from "@sift/shared";
+import { SEVERITY_DEFINITIONS, type TReviewResult, type TSeverity } from "@sift/shared";
 import type { ReactNode } from "react";
 import { duration, fromFinding } from "@/lib/view";
 import { FindingList, Inline, Panel, RiskBadge } from "./ui";
@@ -38,6 +38,19 @@ export function ReviewCard({
       </div>
       {belowHeader}
       <FindingList findings={findings} empty="Nothing to flag. Sift stays quiet when the code is fine." />
+      <details className="border-t border-line px-4 py-2.5 text-xs text-muted">
+        <summary className="cursor-pointer select-none text-faint hover:text-text">
+          What do severities mean?
+        </summary>
+        <dl className="mt-2 grid gap-1.5">
+          {(Object.keys(SEVERITY_DEFINITIONS) as TSeverity[]).map((s) => (
+            <div key={s} className="flex gap-3">
+              <dt className="w-16 shrink-0 font-mono font-semibold uppercase">{s}</dt>
+              <dd>{SEVERITY_DEFINITIONS[s]}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
       <p className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-4 py-2.5 font-mono text-xs text-faint">
         <span>{result.inline.length} ranked</span>
         <span>{result.summarized.length} folded</span>

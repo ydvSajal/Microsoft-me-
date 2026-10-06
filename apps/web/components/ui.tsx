@@ -1,6 +1,6 @@
 // The Sift component kit. Landing, dashboard and paste page all build from these, on the tokens in
 // app/globals.css, so every surface shares one look. Server-safe: no hooks, no client JS.
-import type { TRiskTier, TSeverity } from "@sift/shared";
+import { SEVERITY_DEFINITIONS, type TRiskTier, type TSeverity } from "@sift/shared";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import type { FindingView } from "@/lib/view";
@@ -121,8 +121,12 @@ const SEVERITY_STYLE: Record<TSeverity, string> = {
 
 export function SeverityBadge({ severity }: { severity: TSeverity }) {
   return (
-    <span className={cx("font-mono text-xs font-semibold uppercase", SEVERITY_STYLE[severity])}>
+    <span
+      title={SEVERITY_DEFINITIONS[severity]}
+      className={cx("cursor-help font-mono text-xs font-semibold uppercase", SEVERITY_STYLE[severity])}
+    >
       {severity}
+      <span className="sr-only">: {SEVERITY_DEFINITIONS[severity]}</span>
     </span>
   );
 }

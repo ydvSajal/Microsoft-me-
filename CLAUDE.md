@@ -9,8 +9,8 @@ Sift: AI code reviewer (Microsoft Innovate 2026, Problem 8). Repo `ydvSajal/Micr
 
 ## In flight: demo polish (Kodus-inspired, ideas only: Kodus is AGPL, never copy its code)
 Tickets T-41..T-44 in `docs/TASKS.md`, one PR each, in order:
-- T-41 fix quality gate (`packages/ai/src/usable-fix.ts`): empty, unchanged or cut-off fixes are dropped, the finding stays.
-- T-42 written severity definitions (shared constant, prompt and UI).
+- T-41 fix quality gate (`packages/ai/src/usable-fix.ts`): empty, unchanged or cut-off fixes are dropped, the finding stays. DONE (#32)
+- T-42 written severity definitions: `SEVERITY_DEFINITIONS` in `@sift/shared` feeds the prompt (test guards drift), badge tooltips and the legend. DONE
 - T-43 copy a fix prompt for Cursor/Claude Code.
 - T-44 cached showcase reviews on `/review`.
 Later: GitHub login + repo selection (T-34/T-31), team rules in plain English.
