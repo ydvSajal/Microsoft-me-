@@ -27,20 +27,22 @@ const STATUS_STYLE: Record<string, string> = {
   FAILED: "bg-risk-high-soft text-risk-high",
 };
 
-async function call<T>(path: string, passcode: string, init?: RequestInit): Promise<T> {
+/** The session cookie authenticates; /connect is behind login. */
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
-    headers: { ...(init?.body ? { "content-type": "application/json" } : {}), "x-sift-passcode": passcode },
+    headers: init?.body ? { "content-type": "application/json" } : {},
   });
   const body = (await res.json()) as T | ApiError;
   if (typeof body === "object" && body !== null && "error" in body) {
-    throw new Error(res.status === 401 ? "That passcode isn't right." : (body as ApiError).error.message);
+    throw new Error(
+      res.status === 401 ? "Your session ended. Log in again." : (body as ApiError).error.message,
+    );
   }
   return body as T;
 }
 
-export function ConnectForm({ maxRepos }: { maxRepos: number }) {
-  const [passcode, setPasscode] = useState("");
+export function ConnectForm({ maxRepos, githubLinked }: { maxRepos: number; githubLinked: boolean }) {
   const [repos, setRepos] = useState<RepoRow[] | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
@@ -58,10 +60,15 @@ export function ConnectForm({ maxRepos }: { maxRepos: number }) {
     if (allRef.current) allRef.current.indeterminate = state === "some";
   }, [state]);
 
-  async function refresh(code: string) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: load once on open
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function refresh() {
     const [r, q] = await Promise.all([
-      call<{ repos: RepoRow[] }>("/api/github/repos", code),
-      call<{ jobs: Job[] }>("/api/queue", code),
+      call<{ repos: RepoRow[] }>("/api/github/repos"),
+      call<{ jobs: Job[] }>("/api/queue"),
     ]);
     setRepos(r.repos);
     setJobs(q.jobs);
@@ -71,7 +78,7 @@ export function ConnectForm({ maxRepos }: { maxRepos: number }) {
     setBusy("load");
     setError("");
     try {
-      await refresh(passcode);
+      await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't reach Sift. Check your connection and try again.");
     } finally {
@@ -84,13 +91,13 @@ export function ConnectForm({ maxRepos }: { maxRepos: number }) {
     setError("");
     setResult(null);
     try {
-      const out = await call<QueueResult>("/api/queue", passcode, {
+      const out = await call<QueueResult>("/api/queue", {
         method: "POST",
         body: JSON.stringify({ repos: [...picked] }),
       });
       setResult(out);
       setPicked(new Set());
-      await refresh(passcode);
+      await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't reach Sift. Check your connection and try again.");
     } finally {
@@ -101,31 +108,21 @@ export function ConnectForm({ maxRepos }: { maxRepos: number }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
       <Panel className="overflow-hidden">
-        <form
-          className="flex flex-wrap items-end gap-3 border-b border-line p-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void load();
-          }}
-        >
-          <div className="grid min-w-40 flex-1 gap-2">
-            <label htmlFor="passcode" className="text-sm font-medium text-text">
-              Demo passcode
-            </label>
-            <input
-              id="passcode"
-              type="password"
-              required
-              autoComplete="off"
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              className={input}
-            />
-          </div>
-          <button type="submit" disabled={busy !== null} className={primary}>
-            {busy === "load" ? "Loading…" : repos ? "Reload repositories" : "Load repositories"}
+        <div className="flex flex-wrap items-center gap-3 border-b border-line p-4">
+          <p className="min-w-40 flex-1 text-sm text-muted">
+            {githubLinked
+              ? "Your GitHub repositories. Picked ones go on your watch list."
+              : "Showing the demo token's repositories. Link GitHub to pick from your own."}
+          </p>
+          {!githubLinked && (
+            <a href="/api/auth/github?next=/connect" className={primary}>
+              Link GitHub
+            </a>
+          )}
+          <button type="button" onClick={() => void load()} disabled={busy !== null} className={primary}>
+            {busy === "load" ? "Loading…" : "Reload"}
           </button>
-        </form>
+        </div>
 
         {error && (
           <p role="alert" className="border-b border-line px-4 py-3 text-sm font-medium text-risk-high">
@@ -140,9 +137,7 @@ export function ConnectForm({ maxRepos }: { maxRepos: number }) {
             ))}
           </div>
         ) : !repos ? (
-          <p className="px-4 py-10 text-center text-sm text-muted">
-            Enter the passcode to list the repositories Sift can read.
-          </p>
+          <p className="px-4 py-10 text-center text-sm text-muted">Couldn't list repositories yet.</p>
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
@@ -195,7 +190,7 @@ export function ConnectForm({ maxRepos }: { maxRepos: number }) {
                       </span>
                       {r.enabled && (
                         <span className="rounded-control bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">
-                          Enabled
+                          Watching
                         </span>
                       )}
                     </label>

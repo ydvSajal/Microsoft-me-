@@ -1,8 +1,10 @@
 // Read-only queries behind the dashboard pages. Pages render a "not connected" state when these throw.
 import { db } from "./db";
 
-export async function listRepos() {
+/** All repos, or only the ones `userId` watches. */
+export async function listRepos(userId?: string) {
   return db().repo.findMany({
+    where: userId ? { watchers: { some: { userId } } } : {},
     orderBy: { createdAt: "asc" },
     include: {
       _count: { select: { prs: true } },
