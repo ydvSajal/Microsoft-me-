@@ -17,7 +17,7 @@ Gotcha: when Gemini is slow or rate-limited the fallback model (free OpenRouter)
 Later: GitHub login + repo selection (T-34/T-31), team rules in plain English.
 
 ## Demo readiness (2026-10-07)
-Runbook: `docs/SUPPORT.md` §3. Live and local reviews verified (~15 s); `deploy-smoke` green. Local run needs `apps/web/.env.local` (copy the root `.env`: Next does not read it from the repo root). Still open: backup video (T-22), shop repo secrets `SIFT_API_URL`/`SIFT_INGEST_SECRET`, `SIFT_GITHUB_TOKEN` for `/connect`.
+Runbook: `docs/SUPPORT.md` §3. Live and local reviews verified (~15 s); `deploy-smoke` green. Local run needs `apps/web/.env.local` (copy the root `.env`: Next does not read it from the repo root). Decision: no backup video and no hotspot run (T-22 partly skipped). Still open: shop repo secrets `SIFT_API_URL`/`SIFT_INGEST_SECRET`, `SIFT_GITHUB_TOKEN` for `/connect`.
 
 ## Parked (not for the Oct 8 demo)
 T-23..T-27 (auto-mute, convention mining, Telegram bot, buddy route and firmware). Don't start them. Only a few unused schema fields exist.
