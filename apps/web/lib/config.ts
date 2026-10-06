@@ -18,3 +18,9 @@ export const GITHUB_MAX_PAGES = 10;
 export const QUEUE_MAX_REPOS = 100;
 /** Jobs returned by GET /api/queue. */
 export const QUEUE_LIST_LIMIT = 50;
+/** The buddy looks at this many most recently updated PRs (TRD §6). */
+export const BUDDY_PR_LIMIT = 10;
+/** Used when WAIT_HOURS is unset: a PR with open findings older than this makes the buddy impatient. */
+export const DEFAULT_WAIT_HOURS = 4;
+/** How often the buddy re-reads /api/buddy while the tab is visible. */
+export const BUDDY_POLL_MS = 15_000;
