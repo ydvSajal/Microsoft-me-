@@ -61,7 +61,7 @@ git reset --hard origin/main
 |---|---|---|
 | Review pipeline (Action) | **Merging to `main` is the release.** The demo repo's workflow checks out `sift@main` on every run. | Next demo-repo PR |
 | Web app + API | Vercel Git integration: preview per PR, production per merge | `deploy-smoke.yml` → `/api/health` |
-| DB schema | `prisma migrate deploy` inside the Vercel build | Build log + smoke check (`db: true`) |
+| DB schema | `prisma migrate deploy` inside the Vercel build, **production builds only** (previews never touch the DB schema) | Build log + smoke check (`db: true`) |
 | CLI | Run from the repo (`pnpm sift`) | `ci-checks` |
 | Firmware | `firmware.yml` compiles and uploads `firmware.bin` as an artifact on `main`; flash locally | `firmware-build` |
 

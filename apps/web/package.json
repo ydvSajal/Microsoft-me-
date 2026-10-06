@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "vercel-build": "prisma generate && if [ \"$VERCEL_ENV\" = production ]; then prisma migrate deploy; fi && next build",
     "typecheck": "prisma generate && next typegen && tsc --noEmit -p .",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed"
