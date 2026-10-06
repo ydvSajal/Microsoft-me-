@@ -25,9 +25,9 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 |---|---|---|---|---|---|
 | ☑ | **T-06** | P0 | Demo repo `sift-demo-shop` *(repo secrets and `SIFT_REPO_TOKEN` still to add)* | *(other repo)* `feat/t06-shop` | ~15-file TS shop: `cart.ts`, `checkout.ts`, `auth.ts`, `api/refund.ts`; `sift.yml` from DEPLOYMENT §4 merged first; **then** protect `main` with 1 required approval (the human-approver proof), leaving "include administrators" off so you can still land setup changes; benchmark PRs stay open and are never merged |
 | ☑ | **T-07** | P0 | Diff map | `feat/t07-diff-map` | RIGHT-side added lines per file; renames, deletions, binary files, multi-hunk; ≥6 fixture tests |
-| ☐ | **T-08** | P0 | Action skeleton *(code merged; live check pending: demo repo + key)* | `feat/t08-action` | Posts one `COMMENT` review with stub findings on valid lines, pinned to `commit_id`; skips drafts; fork PRs → log and exit 0 |
+| ☑ | **T-08** | P0 | Action skeleton *(verified live 2026-10-06: 12/12 runs green on sift-demo-shop, reviews posted with labels)* | `feat/t08-action` | Posts one `COMMENT` review with stub findings on valid lines, pinned to `commit_id`; skips drafts; fork PRs → log and exit 0 |
 | ☑ | **T-09** | P0 | Judge + quote check | `feat/t09-judge` | Drops findings whose `quotedCode` isn't in the file; judge re-scores confidence; judge failure keeps the original confidence |
-| ☐ | **T-10** | P0 | End-to-end wiring (**Gate 1**) *(code merged; live check pending: demo repo + key)* | `feat/t10-e2e` | Real findings → grounding against the diff map → posted; off-diff findings go only to the summary; 0 GitHub 422s on 5 demo PRs. **Then set `SIFT_SELF_REVIEW=true`** |
+| ☑ | **T-10** | P0 | End-to-end wiring (**Gate 1**) *(verified live 2026-10-06: 12/12 runs green, 0 422s; `SIFT_SELF_REVIEW` still `false`)* | `feat/t10-e2e` | Real findings → grounding against the diff map → posted; off-diff findings go only to the summary; 0 GitHub 422s on 5 demo PRs. **Then set `SIFT_SELF_REVIEW=true`** |
 
 ## Oct 3 — ranking, dedupe, risk (Gate 2)
 
@@ -95,7 +95,7 @@ Built on the web app's existing token-gated pages. The Connect page uses a serve
 | ✓ | ID | Ticket | Branch | Acceptance criteria |
 |---|---|---|---|---|
 | ☐ | **T-36** | Upload + fixes on Try a file *(live check pending)* | `feat/t36-upload-fixes` | `/review` accepts a dropped or chosen `.ts/.tsx/.js/.jsx` file (read in the browser, size and line limits shown); clicking the risk badge opens the findings' `suggestion`s as before/after; Apply / Apply all edit the code box only when the quote appears exactly once; copy and download the corrected code; risk is not recomputed until re-review; no API or schema change |
-| ☐ | **T-37** | Review queue schema *(migration verified on PGlite; Neon applies it on the next deploy via `vercel-build`)* | `feat/t37-queue-schema` | Prisma `Repo.enabled` + `ReviewJob` (unique per repo, PR number and head sha) with an additive migration; applies and seeds cleanly |
+| ☑ | **T-37** | Review queue schema *(migration verified on PGlite; applied to Neon by the deploy build; `/api/health` db true on cb68887)* | `feat/t37-queue-schema` | Prisma `Repo.enabled` + `ReviewJob` (unique per repo, PR number and head sha) with an additive migration; applies and seeds cleanly |
 | ☐ | **T-38** | GitHub listing + queue API *(offline-tested with a fake GitHub and fake DB; live check pending: `SIFT_GITHUB_TOKEN` in Vercel)* | `feat/t38-queue-api` | `GET /api/github/repos`, `POST /api/queue` (`repos[]` or `all`), `GET /api/queue`: passcode-authed, zod, 1 MB cap, typed errors; 503 when `SIFT_GITHUB_TOKEN` is unset; re-queuing the same PR at the same sha is skipped; token never logged |
 | ☐ | **T-39** | Connect repos page *(selection logic unit-tested, page renders; live check pending: `SIFT_GITHUB_TOKEN` in Vercel)* | `feat/t39-connect-page` | `/connect` lists repos with search and select-all, queues the selection and shows job status; a clear note that jobs stay Queued until the worker (T-33) exists |
 

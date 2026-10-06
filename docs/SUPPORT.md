@@ -76,15 +76,20 @@ Bring:
 
 ## 3. Demo script (~3 min)
 
+Everything runs on `ydvSajal/sift-demo-shop` (12 open PRs) and https://microsoft-me.vercel.app. Hero PR: **#2** `refactor(refund): simplify the refund amount check`. Sift flags a High bug (refunds ignore `refundedCents`) with a concrete fix. If you need a fresh run, push a trivial commit to `bug/refund-ignores-prior`.
+
 | Time | Action | What the audience sees |
 |---|---|---|
 | 0:00 | Problem line: "~35% of AI review comments are useful. Reviewers stopped reading them." | Slide |
-| 0:20 | Open the PR "make getTotal async" (buddy starts scanning, if built) | GitHub (+ buddy) |
-| 0:40–1:30 | The review lands | Risk label `sift:risk-high`; 3 ranked inline comments; summary flags `checkout.ts:42` outside the diff; 6 nits collapsed, 2 duplicates merged; (P3) buddy angry + Telegram ping |
-| 1:30 | Push a 3-layer stack, then rebase it | Cross-layer bug flagged once; the rebase posts **nothing** |
-| 2:00 | Dashboard: precision by category, including Sift's reviews of **its own** PRs | Real data, not a mock |
-| 2:20 | Benchmark table | Sift vs naive LLM vs Copilot/CodeRabbit |
-| 2:40 | Close: "Sift only comments; humans approve. It shows you its own precision, and it reviewed every PR that built it." | — |
+| 0:20 | Open PR #2 on the demo shop; push a trivial commit to re-trigger the review | GitHub, the `Sift review` check running |
+| 0:40-1:30 | The review lands (~1 min) | `sift:risk-high` label; one ranked inline comment at `src/api/refund.ts:18` with a suggested fix; summary lists anything off the diff |
+| 1:30 | Open stack PRs #10-#12, then re-push without changes | Stack layers reviewed once; the re-push posts **nothing** |
+| 2:00 | Web: `/review` → drop a `.ts` file → click the risk badge → **Apply all** | Before/after fixes applied to the file in the browser |
+| 2:15 | Web: `/connect` → Select all → Queue | Repos listed, open PRs queued (needs `SIFT_GITHUB_TOKEN`; skip this row if it isn't set) |
+| 2:30 | Benchmark slide (`benchmark/results.md`): precision 67% vs naive 33%, 0 off-diff, 0 re-posts | Sift vs naive on the same model |
+| 2:50 | Close: "Sift only comments; humans approve. It shows you its own precision." | - |
+
+Known limits (say them before a judge does): seeded-bug recall is 67%; one clean refactor (#7) gets `risk-high`; jobs queued on `/connect` stay Queued until the worker (T-33) exists.
 
 **If something fails live:**
 - Review slow (> 90 s) → keep talking over the stack slide, then return.
