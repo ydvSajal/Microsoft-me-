@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { MAX_BODY_BYTES } from "./config";
-import { readBody, requireToken, safeEqual } from "./http";
+import { env, readBody, requireToken, safeEqual } from "./http";
 
 const post = (body: string, headers: Record<string, string> = {}) =>
   new Request("http://x/api", { method: "POST", body, headers });
@@ -55,5 +55,16 @@ describe("readBody", () => {
     const bySize = await readBody(post(big), Schema);
     expect(byHeader.ok ? 0 : byHeader.res.status).toBe(413);
     expect(bySize.ok ? 0 : bySize.res.status).toBe(413);
+  });
+});
+
+describe("env", () => {
+  it("trims pasted whitespace and treats blank as unset", () => {
+    process.env.SIFT_TEST_ENV = " Ov23abc\n";
+    expect(env("SIFT_TEST_ENV")).toBe("Ov23abc");
+    process.env.SIFT_TEST_ENV = " \n";
+    expect(env("SIFT_TEST_ENV")).toBeUndefined();
+    delete process.env.SIFT_TEST_ENV;
+    expect(env("SIFT_TEST_ENV")).toBeUndefined();
   });
 });

@@ -7,6 +7,7 @@ import { SNOOZE_HOURS } from "@/lib/config";
 import { db } from "@/lib/db";
 import { getUser } from "@/lib/session";
 import { connectTelegram, sendTestPing, toggleSnooze, unlinkTelegram } from "./actions";
+import { env } from "@/lib/http";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -33,8 +34,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       select: { repo: { select: { owner: true, name: true } } },
     })
     .catch(() => []);
-  const bot = process.env.TELEGRAM_BOT_USERNAME;
-  const botReady = !!bot && !!process.env.TELEGRAM_BOT_TOKEN;
+  const bot = env("TELEGRAM_BOT_USERNAME");
+  const botReady = !!bot && !!env("TELEGRAM_BOT_TOKEN");
   const snoozed = !!user.snoozedUntil && user.snoozedUntil > new Date();
 
   return (

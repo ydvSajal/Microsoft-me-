@@ -2,6 +2,10 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import type { z } from "zod";
 import { MAX_BODY_BYTES } from "./config";
 
+/** An env var with surrounding whitespace removed; undefined when empty. Values pasted into
+ * dashboards often carry a trailing newline, which would break OAuth URLs and secret checks. */
+export const env = (name: string): string | undefined => process.env[name]?.trim() || undefined;
+
 export type ApiError = { error: { code: string; message: string; fields?: Record<string, string[]> } };
 
 export const jsonError = (status: number, code: string, message: string, fields?: Record<string, string[]>) =>
