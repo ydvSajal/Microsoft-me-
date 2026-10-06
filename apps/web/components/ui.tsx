@@ -25,6 +25,7 @@ export function Logo() {
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/review", label: "Try a file" },
+  { href: "/connect", label: "Connect repos" },
 ] as const;
 
 export function SiteNav({ current }: { current?: (typeof NAV)[number]["href"] }) {
