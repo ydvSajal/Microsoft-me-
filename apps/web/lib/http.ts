@@ -74,3 +74,7 @@ export async function readBody<T extends z.ZodType>(
   }
   return { ok: true, data: parsed.data };
 }
+
+/** The demo pages' shared passcode, sent in the x-sift-passcode header. Unset passcode → deny. */
+export const requirePasscode = (req: Request) =>
+  requireToken(req.headers.get("x-sift-passcode"), process.env.SIFT_DEMO_PASSCODE, "");
