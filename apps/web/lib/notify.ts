@@ -2,10 +2,11 @@
 import type { TReviewResult } from "@sift/shared";
 import { db } from "./db";
 import { formatReviewMessage, sendMessage } from "./telegram";
+import { env } from "./http";
 
 /** Best effort: logs and moves on, so a Telegram problem never fails an ingest. */
 export async function notifyWatchers(repo: { owner: string; name: string }, r: TReviewResult) {
-  const bot = process.env.TELEGRAM_BOT_TOKEN;
+  const bot = env("TELEGRAM_BOT_TOKEN");
   if (!bot) return;
   try {
     const now = new Date();

@@ -6,6 +6,7 @@ import { SNOOZE_HOURS } from "@/lib/config";
 import { db } from "@/lib/db";
 import { getUser } from "@/lib/session";
 import { sendMessage } from "@/lib/telegram";
+import { env } from "@/lib/http";
 
 const HOUR_MS = 3_600_000;
 
@@ -30,7 +31,7 @@ export async function unlinkTelegram() {
 
 export async function sendTestPing() {
   const user = await me();
-  const bot = process.env.TELEGRAM_BOT_TOKEN;
+  const bot = env("TELEGRAM_BOT_TOKEN");
   const ok =
     !!bot &&
     !!user.telegramChatId &&

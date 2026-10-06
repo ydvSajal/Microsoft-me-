@@ -2,11 +2,12 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { newToken, safeNext } from "@/lib/auth";
 import { GITHUB_OAUTH_SCOPE, OAUTH_STATE_COOKIE, OAUTH_STATE_MAX_AGE_S } from "@/lib/config";
+import { env } from "@/lib/http";
 
 /** Start GitHub sign-in: remember a random state (CSRF) and where to land, then go to GitHub. */
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const clientId = process.env.GITHUB_CLIENT_ID;
+  const clientId = env("GITHUB_CLIENT_ID");
   if (!clientId) return NextResponse.redirect(new URL("/login?error=config", url));
   const state = newToken();
   (await cookies()).set(OAUTH_STATE_COOKIE, `${state}|${safeNext(url.searchParams.get("next"))}`, {

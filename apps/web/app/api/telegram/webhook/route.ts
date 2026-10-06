@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { readBody, requireToken } from "@/lib/http";
+import { env, readBody, requireToken } from "@/lib/http";
 import { parseCommand, sendMessage } from "@/lib/telegram";
 
 // Only the fields we read; Telegram sends many more.
@@ -12,7 +12,7 @@ const Update = z.object({
 export async function POST(req: Request) {
   const denied = requireToken(
     req.headers.get("x-telegram-bot-api-secret-token"),
-    process.env.TELEGRAM_WEBHOOK_SECRET,
+    env("TELEGRAM_WEBHOOK_SECRET"),
     "",
   );
   if (denied) return denied;
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   if (!body.ok || !body.data.message) return new Response(null, { status: 200 });
   const chatId = String(body.data.message.chat.id);
   const cmd = parseCommand(body.data.message.text);
-  const bot = process.env.TELEGRAM_BOT_TOKEN;
+  const bot = env("TELEGRAM_BOT_TOKEN");
   const reply = (text: string) => (bot ? sendMessage(bot, chatId, text) : Promise.resolve(false));
   try {
     const prisma = db();

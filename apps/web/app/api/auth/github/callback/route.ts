@@ -4,7 +4,7 @@ import { safeNext, seal } from "@/lib/auth";
 import { MAX_ACCOUNTS, OAUTH_STATE_COOKIE } from "@/lib/config";
 import { db } from "@/lib/db";
 import { exchangeCode, fetchGitHubUser, resolveGitHubSignIn } from "@/lib/github-oauth";
-import { safeEqual } from "@/lib/http";
+import { env, safeEqual } from "@/lib/http";
 import { createSession, getUser } from "@/lib/session";
 
 export async function GET(req: Request) {
@@ -17,9 +17,9 @@ export async function GET(req: Request) {
   const got = url.searchParams.get("state");
   if (!state || !got || !code || !safeEqual(state, got)) return fail("state");
 
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
-  const secret = process.env.SIFT_AUTH_SECRET;
+  const clientId = env("GITHUB_CLIENT_ID");
+  const clientSecret = env("GITHUB_CLIENT_SECRET");
+  const secret = env("SIFT_AUTH_SECRET");
   if (!clientId || !clientSecret || !secret) return fail("config");
 
   try {

@@ -5,7 +5,7 @@ import { newToken, sha256, unseal } from "./auth";
 import { SESSION_COOKIE, SESSION_DAYS } from "./config";
 import { db } from "./db";
 import type { User } from "./generated/prisma/client";
-import { requirePasscode } from "./http";
+import { env, requirePasscode } from "./http";
 
 const DAY_MS = 86_400_000;
 
@@ -52,7 +52,7 @@ export async function destroySession() {
 
 /** The user's GitHub token, unsealed; null when not linked or SIFT_AUTH_SECRET is missing or changed. */
 export function githubTokenOf(user: { githubToken: string | null }): string | null {
-  const secret = process.env.SIFT_AUTH_SECRET;
+  const secret = env("SIFT_AUTH_SECRET");
   return user.githubToken && secret ? unseal(user.githubToken, secret) : null;
 }
 
