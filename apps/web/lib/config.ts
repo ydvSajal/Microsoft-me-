@@ -31,5 +31,10 @@ export const OAUTH_STATE_COOKIE = "sift_oauth_state";
 export const OAUTH_STATE_MAX_AGE_S = 600;
 /** read:user for the profile, repo so /connect can list private repos too. */
 export const GITHUB_OAUTH_SCOPE = "read:user repo";
+/** Telegram pings (T-25): findings listed per message, and how much of each suggested fix to show. */
+export const TELEGRAM_TOP_FINDINGS = 3;
+export const TELEGRAM_SUGGESTION_MAX = 300;
+/** "Snooze pings" on /settings. */
+export const SNOOZE_HOURS = 8;
 /** How often the buddy re-reads /api/buddy while the tab is visible. */
 export const BUDDY_POLL_MS = 15_000;

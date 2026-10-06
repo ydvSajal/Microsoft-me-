@@ -7,6 +7,7 @@ import { POST as started } from "./ingest/review-started/route";
 import { GET as listReposRoute } from "./github/repos/route";
 import { GET as queueGet, POST as queuePost } from "./queue/route";
 import { POST as reviewFileRoute } from "./review-file/route";
+import { POST as telegramWebhook } from "./telegram/webhook/route";
 
 const SECRET = "test-ingest-secret";
 const req = (body: unknown, auth: string | null = `Bearer ${SECRET}`) =>
@@ -149,5 +150,34 @@ describe("queue and GitHub listing routes", () => {
     expect(post.status).toBe(503);
     expect((await post.json()).error.code).toBe("not_configured");
     expect((await listReposRoute(authed("GET"))).status).toBe(503);
+  });
+});
+
+describe("POST /api/telegram/webhook", () => {
+  const update = (secret: string | null) =>
+    new Request("http://x/api/telegram/webhook", {
+      method: "POST",
+      body: JSON.stringify({ message: { chat: { id: 1 }, text: "hello" } }),
+      headers: secret ? { "x-telegram-bot-api-secret-token": secret } : {},
+    });
+  beforeEach(() => {
+    process.env.TELEGRAM_WEBHOOK_SECRET = "hook-secret";
+  });
+  afterEach(() => {
+    delete process.env.TELEGRAM_WEBHOOK_SECRET;
+  });
+
+  it("401 without or with the wrong secret header", async () => {
+    expect((await telegramWebhook(update(null))).status).toBe(401);
+    expect((await telegramWebhook(update("nope"))).status).toBe(401);
+  });
+
+  it("401 when the server has no secret configured", async () => {
+    delete process.env.TELEGRAM_WEBHOOK_SECRET;
+    expect((await telegramWebhook(update("hook-secret"))).status).toBe(401);
+  });
+
+  it("200 and ignores ordinary messages", async () => {
+    expect((await telegramWebhook(update("hook-secret"))).status).toBe(200);
   });
 });
