@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import { Page, PageHeader, SiteNav } from "@/components/ui";
+import { redirect } from "next/navigation";
+import { getUser } from "@/lib/session";
+import { Page, PageHeader } from "@/components/ui";
+import { SiteNav } from "@/components/site-nav";
 import { QUEUE_MAX_REPOS } from "@/lib/config";
 import { ConnectForm } from "./connect-form";
 
 export const metadata: Metadata = { title: "Connect repos" };
 
-export default function ConnectPage() {
+export default async function ConnectPage() {
+  if (!(await getUser())) redirect("/login?next=/connect");
   return (
     <>
       <SiteNav current="/connect" />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DbUnavailable, EmptyState, Page, PageHeader, Panel, SiteNav } from "@/components/ui";
+import { DbUnavailable, EmptyState, Page, PageHeader, Panel } from "@/components/ui";
+import { SiteNav } from "@/components/site-nav";
 import { listRepos, tryQuery } from "@/lib/queries";
 import { ago } from "@/lib/view";
 

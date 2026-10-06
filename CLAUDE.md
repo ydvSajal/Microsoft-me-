@@ -20,8 +20,9 @@ Later: GitHub login + repo selection (T-34/T-31), team rules in plain English.
 Runbook: `docs/SUPPORT.md` §3. Live and local reviews verified (~15 s); `deploy-smoke` green. Local run needs `apps/web/.env.local` (copy the root `.env`: Next does not read it from the repo root). Decision: no backup video and no hotspot run (T-22 partly skipped). Still open: shop repo secrets `SIFT_API_URL`/`SIFT_INGEST_SECRET`, `SIFT_GITHUB_TOKEN` for `/connect`.
 
 ## In flight: buddy, accounts, Telegram (un-parked 2026-10-07)
-Plan: T-26 web buddy (DONE: `components/buddy.tsx` in the root layout, `GET /api/buddy`, `computeBuddyState` in `@sift/shared`; `/review` dispatches `sift:review`) → T-45 accounts (hand-rolled scrypt + session cookie + GitHub OAuth, no auth lib) → T-46 watched repos → T-25 Telegram (one app bot, deep-link `/start <linkToken>`). Schema + migration `0003_accounts` shipped first (dry-run on a temp Neon branch: clean).
+Plan: T-26 web buddy (DONE: `components/buddy.tsx` in the root layout, `GET /api/buddy`, `computeBuddyState` in `@sift/shared`; `/review` dispatches `sift:review`) → T-45 accounts (DONE: `lib/auth.ts` crypto, `lib/session.ts` cookies, `app/login`, `/api/auth/github*`; nav is `components/site-nav.tsx` (server), `NavBar` in ui.tsx; `/connect` needs login) → T-46 watched repos → T-25 Telegram (one app bot, deep-link `/start <linkToken>`). Schema + migration `0003_accounts` shipped first (dry-run on a temp Neon branch: clean).
 Neon MCP is connected (project `sift`, id `shy-block-91676913`): use temp branches for migration dry-runs; prod migrates only via `prisma migrate deploy` on the production build.
+Local dev DB: Neon branch `dev` (`br-plain-wind-b8qmrj55`). Run dev with `DATABASE_URL` set to its URL so test accounts stay off production.
 
 ## Parked (not for the Oct 8 demo)
 T-23, T-24, T-27 (auto-mute, convention mining, buddy firmware). Don't start them.

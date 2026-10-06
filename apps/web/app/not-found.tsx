@@ -1,4 +1,5 @@
-import { ButtonLink, EmptyState, Page, SiteNav } from "@/components/ui";
+import { ButtonLink, EmptyState, Page } from "@/components/ui";
+import { SiteNav } from "@/components/site-nav";
 
 export default function NotFound() {
   return (

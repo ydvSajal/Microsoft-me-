@@ -9,9 +9,9 @@ import {
   PageHeader,
   Panel,
   RiskBadge,
-  SiteNav,
   Stat,
 } from "@/components/ui";
+import { SiteNav } from "@/components/site-nav";
 import { getPr, tryQuery } from "@/lib/queries";
 import { ago, duration, type FindingView, lower, riskOf } from "@/lib/view";
 

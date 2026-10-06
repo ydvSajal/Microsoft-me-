@@ -1,10 +1,10 @@
-import { Page, Panel, SiteNav, Skeleton } from "./ui";
+import { NavBar, Page, Panel, Skeleton } from "./ui";
 
 /** Skeleton in the shape of the dashboard pages (header, list panel, side panel). */
 export function DashboardLoading() {
   return (
     <>
-      <SiteNav current="/dashboard" />
+      <NavBar current="/dashboard" />
       <Page className="pb-16">
         <div className="py-8">
           <Skeleton className="h-8 w-64" />
