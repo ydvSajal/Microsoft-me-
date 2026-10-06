@@ -4,6 +4,8 @@ import { MAX_BODY_BYTES } from "@/lib/config";
 import { POST as feedback } from "./ingest/feedback/route";
 import { POST as review } from "./ingest/review/route";
 import { POST as started } from "./ingest/review-started/route";
+import { GET as listReposRoute } from "./github/repos/route";
+import { GET as queueGet, POST as queuePost } from "./queue/route";
 import { POST as reviewFileRoute } from "./review-file/route";
 
 const SECRET = "test-ingest-secret";
@@ -100,5 +102,52 @@ describe("POST /api/review-file", () => {
     const res = await reviewFileRoute(passReq({ filename: "a.ts", content: "const a = 1;" }, "pass"));
     Object.assign(process.env, saved);
     expect(res.status).toBe(503);
+  });
+});
+
+describe("queue and GitHub listing routes", () => {
+  const authed = (method: string, body?: unknown, passcode: string | null = "pass") =>
+    new Request("http://x/api", {
+      method,
+      body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body),
+      headers: passcode ? { "x-sift-passcode": passcode } : {},
+    });
+
+  beforeEach(() => {
+    process.env.SIFT_DEMO_PASSCODE = "pass";
+    delete process.env.SIFT_GITHUB_TOKEN;
+  });
+  afterEach(() => {
+    delete process.env.SIFT_DEMO_PASSCODE;
+  });
+
+  it.each([
+    ["GET /api/github/repos", () => listReposRoute(authed("GET", undefined, null))],
+    ["POST /api/queue", () => queuePost(authed("POST", { all: true }, "nope"))],
+    ["GET /api/queue", () => queueGet(authed("GET", undefined, null))],
+  ])("%s → 401 without the passcode", async (_n, call) => {
+    expect((await call()).status).toBe(401);
+  });
+
+  it("401 when the server has no passcode configured", async () => {
+    delete process.env.SIFT_DEMO_PASSCODE;
+    expect((await queuePost(authed("POST", { all: true }, "pass"))).status).toBe(401);
+  });
+
+  it("POST /api/queue → 400 with field errors on a bad body", async () => {
+    const res = await queuePost(authed("POST", { repos: ["no-slash"] }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("invalid");
+  });
+
+  it("POST /api/queue → 413 over 1 MB", async () => {
+    expect((await queuePost(authed("POST", "x".repeat(MAX_BODY_BYTES + 1)))).status).toBe(413);
+  });
+
+  it("POST /api/queue and GET /api/github/repos → 503 when SIFT_GITHUB_TOKEN is unset", async () => {
+    const post = await queuePost(authed("POST", { repos: ["o/n"] }));
+    expect(post.status).toBe(503);
+    expect((await post.json()).error.code).toBe("not_configured");
+    expect((await listReposRoute(authed("GET"))).status).toBe(503);
   });
 });
