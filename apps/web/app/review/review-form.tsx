@@ -7,6 +7,7 @@ import { ReviewCard } from "@/components/review-card";
 import { Panel, Skeleton } from "@/components/ui";
 import { UPLOAD_EXTENSIONS, UPLOAD_MAX_BYTES } from "@/lib/config";
 import { applyAll, applySuggestion, fixable } from "@/lib/fixes";
+import { SHOWCASE, type ShowcaseExample } from "@/lib/showcase";
 
 type ApiError = { error: { code: string; message: string; fields?: Record<string, string[]> } };
 type State =
@@ -29,6 +30,7 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
   const [fixesOpen, setFixesOpen] = useState(false);
   const [applied, setApplied] = useState<ReadonlySet<string>>(new Set());
   const [fixMessage, setFixMessage] = useState("");
+  const [example, setExample] = useState<ShowcaseExample | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const lines = countLines(content);
@@ -57,7 +59,19 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
     }
   }
 
+  function showExample(e: ShowcaseExample) {
+    setExample(e);
+    setFilename(e.filename);
+    setContent(e.content);
+    setUploadNote(null);
+    setApplied(new Set());
+    setFixesOpen(false);
+    setFixMessage("");
+    setState({ kind: "done", result: e.result });
+  }
+
   async function submit(form: FormData) {
+    setExample(null);
     setState({ kind: "loading" });
     setApplied(new Set());
     setFixesOpen(false);
@@ -124,6 +138,31 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
             void submit(new FormData(e.currentTarget));
           }}
         >
+          <div className="grid gap-2">
+            <p className="text-sm font-medium text-text">Try an example</p>
+            <div className="flex flex-wrap gap-2">
+              {SHOWCASE.map((e) => (
+                <button
+                  key={e.slug}
+                  type="button"
+                  title={e.blurb}
+                  onClick={() => showExample(e)}
+                  className={`inline-flex h-8 items-center rounded-control border px-3 text-xs font-medium transition active:scale-[0.98] ${
+                    example?.slug === e.slug
+                      ? "border-accent bg-accent-soft text-text"
+                      : "border-line bg-surface text-text hover:border-accent"
+                  }`}
+                >
+                  {e.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted">
+              {example
+                ? `${example.blurb} Recorded review, shown instantly.`
+                : "Recorded reviews. They load instantly, with no passcode."}
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => fileRef.current?.click()}

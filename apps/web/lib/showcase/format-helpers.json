@@ -1,0 +1,22 @@
+{
+  "slug": "format-helpers",
+  "label": "Clean file",
+  "blurb": "Nothing to flag. Sift stays quiet when the code is fine.",
+  "filename": "src/utils/format.ts",
+  "content": "const usd = new Intl.NumberFormat(\"en-US\", { style: \"currency\", currency: \"USD\" });\n\nexport function formatCents(cents: number): string {\n  return usd.format(cents / 100);\n}\n\nexport function pluralize(count: number, word: string): string {\n  return `${count} ${word}${count === 1 ? \"\" : \"s\"}`;\n}\n\nexport function clamp(value: number, min: number, max: number): number {\n  return Math.min(max, Math.max(min, value));\n}\n",
+  "result": {
+    "mode": "file",
+    "requestedReviewers": [],
+    "riskTier": "low",
+    "whatChanged": "This utility file provides helper functions for formatting currency in cents, pluralizing words naively, and clamping numeric values within a range.",
+    "inline": [],
+    "summarized": [],
+    "droppedCount": 0,
+    "impact": [],
+    "skippedFiles": [],
+    "stats": {
+      "llmCalls": 1,
+      "durationMs": 7213
+    }
+  }
+}
