@@ -86,7 +86,8 @@ export const ReviewStarted = z.object({ repo: z.string(), prNumber: z.number().i
 
 export const Mood = z.enum(["sleepy", "scanning", "happy", "meh", "worried", "angry", "impatient"]);
 export const BuddyState = z.object({
-  mood: Mood, text: z.string().max(40), pending: z.number().int(), buzz: z.boolean(), rev: z.number().int(),
+  mood: Mood, text: z.string().max(40), pending: z.number().int(),
+  critical: z.number().int(), high: z.number().int(), medium: z.number().int(), buzz: z.boolean(), rev: z.number().int(),
 });
 
 export type TFinding = z.infer<typeof Finding>;
@@ -175,14 +176,34 @@ model CategoryStat {
   @@unique([repoId, category])
 }
 
-model User {
-  id             String    @id @default(cuid())
-  githubLogin    String    @unique
-  telegramChatId String?   @unique
-  linkToken      String?   @unique
-  roastMode      Boolean   @default(false)
+model User {                          // email+password, GitHub sign-in, or both (T-45)
+  id             String     @id @default(cuid())
+  email          String?    @unique   // lowercased
+  passwordHash   String?              // scrypt "salt:hash"
+  githubId       Int?       @unique
+  githubLogin    String?    @unique
+  githubToken    String?              // AES-256-GCM sealed OAuth token
+  telegramChatId String?    @unique
+  linkToken      String?    @unique
+  roastMode      Boolean    @default(false)
   snoozedUntil   DateTime?
+  createdAt      DateTime   @default(now())
   devices        Device[]
+  sessions       Session[]
+  watches        UserRepo[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique   // sha256 of the cookie value
+  userId    String             // → User, cascade delete
+  expiresAt DateTime
+}
+
+model UserRepo {                      // watch list: buddy mood + Telegram pings (T-46)
+  userId String
+  repoId String
+  @@id([userId, repoId])
 }
 
 model Device {

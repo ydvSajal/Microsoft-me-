@@ -90,6 +90,10 @@ export const BuddyState = z.object({
   mood: Mood,
   text: z.string().max(40),
   pending: z.number().int(),
+  // Findings in the latest reviews by severity; the web buddy panel shows them as tiles.
+  critical: z.number().int(),
+  high: z.number().int(),
+  medium: z.number().int(),
   buzz: z.boolean(),
   rev: z.number().int(),
 });
