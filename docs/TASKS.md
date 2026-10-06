@@ -60,7 +60,7 @@ One person, every file. Tickets are in build order. Tick the box in the same PR 
 
 | ✓ | ID | Pri | Ticket | Branch | Acceptance criteria |
 |---|---|---|---|---|---|
-| ☐ | **T-22** | P0 | Demo runbook + backup video | `docs/t22-demo` | Full dry run on the phone hotspot; `docs/SUPPORT.md` §3 matches reality; backup video recorded and stored offline; Day-1 deck updated with the benchmark table |
+| ☐ | **T-22** | P0 | Demo runbook *(done; backup video and hotspot run skipped by decision 2026-10-07)* | `docs/t22-demo` | Full dry run on the phone hotspot; `docs/SUPPORT.md` §3 matches reality; backup video recorded and stored offline; Day-1 deck updated with the benchmark table |
 
 ## P3 — parked (not part of the Oct 8 demo)
 

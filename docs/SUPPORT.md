@@ -62,7 +62,7 @@ Bring:
 - 2 laptops (primary + backup), both logged in to GitHub and Vercel;
 - phone hotspot + a charged power bank;
 - (P3) buddy + USB cable;
-- the backup video on **both** laptops, offline;
+- the app running locally on **both** laptops (`pnpm --filter web dev`; the cached examples work with no network);
 - the benchmark table as a static slide.
 
 **T-60 min:**
@@ -100,10 +100,10 @@ Known limits (say them before a judge does): seeded-bug recall is 67%; one clean
 
 **If something fails live:**
 - Live upload slow (> 60 s) → keep talking over the slide; if still nothing, click **Cart totals** (cached) and say "recorded earlier".
-- Live site down → run it locally on :3000 (above), or play the backup video.
+- Live site down → run it locally on :3000 (above).
 - Model/provider error → the cached examples never call a model; use them.
-- Wi-Fi dead → backup video. Don't debug on stage.
-- PR-mode page broken → the PRs above are static; show them as screenshots from the backup video.
+- Wi-Fi dead → local app on :3000, cached examples only (no model call). Don't debug on stage.
+- GitHub unreachable → skip the PR rows, say so, and use the benchmark slide.
 
 ## 4. Break-glass (demo days only)
 
