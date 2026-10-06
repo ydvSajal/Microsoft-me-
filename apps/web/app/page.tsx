@@ -1,7 +1,8 @@
 import { ReviewResult } from "@sift/shared";
 import demoReview from "@sift/shared/fixtures/review-result-pr.json";
 import { ReviewCard } from "@/components/review-card";
-import { ButtonLink, Logo, Page, Panel, RiskBadge, SiteNav } from "@/components/ui";
+import { ButtonLink, Logo, Page, Panel, RiskBadge } from "@/components/ui";
+import { SiteNav } from "@/components/site-nav";
 
 // The hero shows a real Sift component rendering a real review result (the shared demo fixture),
 // not a mock screenshot.

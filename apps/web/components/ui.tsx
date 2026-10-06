@@ -28,7 +28,10 @@ const NAV = [
   { href: "/connect", label: "Connect repos" },
 ] as const;
 
-export function SiteNav({ current }: { current?: (typeof NAV)[number]["href"] }) {
+export type NavHref = (typeof NAV)[number]["href"];
+
+/** Pages use components/site-nav.tsx, which fills `account` from the session. */
+export function NavBar({ current, account }: { current?: NavHref; account?: ReactNode }) {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur-md">
       <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
@@ -50,6 +53,7 @@ export function SiteNav({ current }: { current?: (typeof NAV)[number]["href"] })
               </Link>
             </li>
           ))}
+          {account && <li className="ml-2 border-l border-line pl-3">{account}</li>}
         </ul>
       </nav>
     </header>

@@ -69,7 +69,7 @@ One PR each, in this order. The schema and `BuddyState` counts ship first (`feat
 | ✓ | ID | Ticket | Branch | Acceptance criteria |
 |---|---|---|---|---|
 | ☑ | **T-26** | Web buddy | `feat/t26-buddy` | `computeBuddyState()` per TRD §6 with tests; `GET /api/buddy` (session user's watched repos, else all); floating character on every page with 7 moods, a status panel and demo mood chips; reacts to the `/review` result. `/ack` waits for the firmware |
-| ☐ | **T-45** | Accounts | `feat/t45-auth` | Email + password sign-up/login (scrypt, hashed session cookie, cap `MAX_ACCOUNTS`); Sign in with GitHub (OAuth App, state cookie, token sealed at rest); `/connect` and `/settings` need login |
+| ☑ | **T-45** | Accounts | `feat/t45-auth` | Email + password sign-up/login (scrypt, hashed session cookie, cap `MAX_ACCOUNTS`); Sign in with GitHub (OAuth App, state cookie, token sealed at rest); `/connect` and `/settings` need login |
 | ☐ | **T-46** | Watched repos | `feat/t46-watch` | `/connect` lists the user's GitHub repos and saves picks as `UserRepo`; dashboard "My repos" filter |
 | ☐ | **T-25** | Telegram pings | `feat/t25-telegram` | One app bot; `/settings` deep link `/start <linkToken>`; webhook with secret check; every ingested review pings watchers (risk, top findings, suggestion); snooze; never fails the ingest |
 

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DbUnavailable, EmptyState, Page, PageHeader, Panel, RiskBadge, SiteNav } from "@/components/ui";
+import { DbUnavailable, EmptyState, Page, PageHeader, Panel, RiskBadge } from "@/components/ui";
+import { SiteNav } from "@/components/site-nav";
 import { getRepo, tryQuery } from "@/lib/queries";
 import { ago, percent, precision, riskOf } from "@/lib/view";
 

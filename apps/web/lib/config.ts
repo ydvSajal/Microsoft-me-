@@ -22,5 +22,14 @@ export const QUEUE_LIST_LIMIT = 50;
 export const BUDDY_PR_LIMIT = 10;
 /** Used when WAIT_HOURS is unset: a PR with open findings older than this makes the buddy impatient. */
 export const DEFAULT_WAIT_HOURS = 4;
+/** Accounts (T-45): a small closed group, so sign-up stops at this many users. */
+export const MAX_ACCOUNTS = 20;
+export const SESSION_COOKIE = "sift_session";
+export const SESSION_DAYS = 30;
+/** OAuth state cookie lives just long enough for the GitHub round-trip. */
+export const OAUTH_STATE_COOKIE = "sift_oauth_state";
+export const OAUTH_STATE_MAX_AGE_S = 600;
+/** read:user for the profile, repo so /connect can list private repos too. */
+export const GITHUB_OAUTH_SCOPE = "read:user repo";
 /** How often the buddy re-reads /api/buddy while the tab is visible. */
 export const BUDDY_POLL_MS = 15_000;

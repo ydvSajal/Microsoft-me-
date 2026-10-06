@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Page, PageHeader, SiteNav } from "@/components/ui";
+import { Page, PageHeader } from "@/components/ui";
+import { SiteNav } from "@/components/site-nav";
 import { REVIEW_FILE_MAX_LINES } from "@/lib/config";
 import { ReviewForm } from "./review-form";
 
