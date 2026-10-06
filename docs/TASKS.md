@@ -95,7 +95,7 @@ Built on the web app's existing token-gated pages. The Connect page uses a serve
 | ✓ | ID | Ticket | Branch | Acceptance criteria |
 |---|---|---|---|---|
 | ☐ | **T-36** | Upload + fixes on Try a file *(live check pending)* | `feat/t36-upload-fixes` | `/review` accepts a dropped or chosen `.ts/.tsx/.js/.jsx` file (read in the browser, size and line limits shown); clicking the risk badge opens the findings' `suggestion`s as before/after; Apply / Apply all edit the code box only when the quote appears exactly once; copy and download the corrected code; risk is not recomputed until re-review; no API or schema change |
-| ☐ | **T-37** | Review queue schema | `feat/t37-queue-schema` | Prisma `Repo.enabled` + `ReviewJob` (unique per repo, PR number and head sha) with an additive migration; applies and seeds cleanly |
+| ☐ | **T-37** | Review queue schema *(migration verified on PGlite; Neon applies it on the next deploy via `vercel-build`)* | `feat/t37-queue-schema` | Prisma `Repo.enabled` + `ReviewJob` (unique per repo, PR number and head sha) with an additive migration; applies and seeds cleanly |
 | ☐ | **T-38** | GitHub listing + queue API | `feat/t38-queue-api` | `GET /api/github/repos`, `POST /api/queue` (`repos[]` or `all`), `GET /api/queue`: passcode-authed, zod, 1 MB cap, typed errors; 503 when `SIFT_GITHUB_TOKEN` is unset; re-queuing the same PR at the same sha is skipped; token never logged |
 | ☐ | **T-39** | Connect repos page | `feat/t39-connect-page` | `/connect` lists repos with search and select-all, queues the selection and shows job status; a clear note that jobs stay Queued until the worker (T-33) exists |
 
