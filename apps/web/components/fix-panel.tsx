@@ -2,6 +2,7 @@
 
 import type { TFinding, TRiskTier } from "@sift/shared";
 import { useState } from "react";
+import { promptForFile, promptForFinding } from "@/lib/fix-prompt";
 import { RISK_STYLE } from "./ui";
 
 /** The risk badge as a button: shows how many fixes Sift suggests and toggles the panel below it. */
@@ -40,6 +41,7 @@ const small =
 
 export function FixPanel({
   fixes,
+  all,
   applied,
   filename,
   content,
@@ -49,6 +51,8 @@ export function FixPanel({
   onRereview,
 }: {
   fixes: TFinding[];
+  /** Every finding in the review, with or without a fix (for the all-in-one prompt). */
+  all: TFinding[];
   applied: ReadonlySet<string>;
   filename: string;
   content: string;
@@ -60,14 +64,15 @@ export function FixPanel({
   const [note, setNote] = useState("");
   const pending = fixes.filter((f) => !applied.has(f.fingerprint)).length;
 
-  async function copy() {
+  async function copyText(text: string, done: string) {
     try {
-      await navigator.clipboard.writeText(content);
-      setNote("Corrected code copied.");
+      await navigator.clipboard.writeText(text);
+      setNote(done);
     } catch {
-      setNote("Copy isn't available here. Select the code on the left and copy it.");
+      setNote("Copy isn't available here. Select the text and copy it.");
     }
   }
+  const copy = () => copyText(content, "Corrected code copied.");
 
   function download() {
     const url = URL.createObjectURL(new Blob([content], { type: "text/plain" }));
@@ -111,14 +116,28 @@ export function FixPanel({
                     <span className="mr-2 font-mono text-xs text-muted">line {f.line}</span>
                     {f.title}
                   </p>
-                  <button
-                    type="button"
-                    disabled={done}
-                    onClick={() => onApply(f)}
-                    className={`${small} border border-line bg-surface text-text hover:bg-surface-2`}
-                  >
-                    {done ? "Applied" : "Apply fix"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyText(
+                          promptForFinding(f, filename),
+                          "Prompt copied. Paste it into Cursor or Claude Code.",
+                        )
+                      }
+                      className={`${small} border border-line bg-surface text-text hover:bg-surface-2`}
+                    >
+                      Copy prompt
+                    </button>
+                    <button
+                      type="button"
+                      disabled={done}
+                      onClick={() => onApply(f)}
+                      className={`${small} border border-line bg-surface text-text hover:bg-surface-2`}
+                    >
+                      {done ? "Applied" : "Apply fix"}
+                    </button>
+                  </div>
                 </div>
                 <pre className="overflow-x-auto border-t border-line font-mono text-xs leading-relaxed">
                   <code className="block whitespace-pre bg-risk-high-soft px-3 py-1 text-risk-high">
@@ -137,6 +156,15 @@ export function FixPanel({
       <div className="flex flex-wrap items-center gap-2 px-4 pb-4">
         <button type="button" onClick={copy} className={`${small} border border-line bg-surface text-text`}>
           Copy corrected code
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            copyText(promptForFile(filename, all), "Prompt copied. Paste it into Cursor or Claude Code.")
+          }
+          className={`${small} border border-line bg-surface text-text`}
+        >
+          Copy prompt for all
         </button>
         <button
           type="button"

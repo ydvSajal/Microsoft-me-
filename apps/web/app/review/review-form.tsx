@@ -265,6 +265,7 @@ export function ReviewForm({ maxLines }: { maxLines: number }) {
                   fixesOpen && (
                     <FixPanel
                       fixes={fixes}
+                      all={[...state.result.inline, ...state.result.summarized]}
                       applied={applied}
                       filename={filename}
                       content={content}
