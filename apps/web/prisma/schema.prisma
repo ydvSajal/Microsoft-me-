@@ -34,15 +34,39 @@ enum Outcome {
   DISMISSED
 }
 
+enum JobStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
 model Repo {
   id        String         @id @default(cuid())
   owner     String
   name      String
+  enabled   Boolean        @default(false) // picked on /connect; only enabled repos get queued reviews
   createdAt DateTime       @default(now())
   prs       PullRequest[]
   stats     CategoryStat[]
+  jobs      ReviewJob[]
 
   @@unique([owner, name])
+}
+
+/// A pull request waiting for review. Created by the queue API (T-38); a worker runs it later (T-33).
+model ReviewJob {
+  id        String      @id @default(cuid())
+  repoId    String
+  repo      Repo        @relation(fields: [repoId], references: [id])
+  prNumber  Int
+  title     String
+  headSha   String
+  status    JobStatus   @default(QUEUED)
+  createdAt DateTime    @default(now())
+
+  @@unique([repoId, prNumber, headSha]) // queuing the same PR at the same commit twice is a no-op
+  @@index([status, createdAt])
 }
 
 model PullRequest {
