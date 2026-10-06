@@ -11,8 +11,9 @@ Sift: AI code reviewer (Microsoft Innovate 2026, Problem 8). Repo `ydvSajal/Micr
 Tickets T-41..T-44 in `docs/TASKS.md`, one PR each, in order:
 - T-41 fix quality gate (`packages/ai/src/usable-fix.ts`): empty, unchanged or cut-off fixes are dropped, the finding stays. DONE (#32)
 - T-42 written severity definitions: `SEVERITY_DEFINITIONS` in `@sift/shared` feeds the prompt (test guards drift), badge tooltips and the legend. DONE
-- T-43 copy a fix prompt for Cursor/Claude Code: `apps/web/lib/fix-prompt.ts`, buttons in `FixPanel`. DONE (UI interaction checked after T-44 via examples)
-- T-44 cached showcase reviews on `/review`.
+- T-43 copy a fix prompt for Cursor/Claude Code: `apps/web/lib/fix-prompt.ts`, buttons in `FixPanel`. DONE (copy-all and apply verified in headless Chrome)
+- T-44 cached showcase reviews on `/review`: `apps/web/lib/showcase/*.json`, recorded by `pnpm --filter web showcase:record` (dev only, primary model only; re-run if the prompt changes). DONE
+Gotcha: when Gemini is slow or rate-limited the fallback model (free OpenRouter) often returns findings with no `suggestion`; check which model produced a recording.
 Later: GitHub login + repo selection (T-34/T-31), team rules in plain English.
 
 ## Rules of thumb

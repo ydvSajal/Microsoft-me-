@@ -18,6 +18,15 @@ const finding = (over: Partial<TFinding>): TFinding => ({
 });
 
 describe("applySuggestion", () => {
+  it("keeps the indentation when the fix comes back without it", () => {
+    const r = applySuggestion(
+      "fn() {\n  const u = find();\n}",
+      "  const u = find();",
+      "const u = await find();",
+    );
+    expect(r).toEqual({ ok: true, content: "fn() {\n  const u = await find();\n}" });
+  });
+
   it("replaces a quote that appears once", () => {
     const r = applySuggestion("a\nconst u = find();\nb", "const u = find();", "const u = await find();");
     expect(r).toEqual({ ok: true, content: "a\nconst u = await find();\nb" });

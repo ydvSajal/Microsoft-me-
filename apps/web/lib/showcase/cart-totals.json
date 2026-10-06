@@ -1,0 +1,65 @@
+{
+  "slug": "cart-totals",
+  "label": "Cart totals",
+  "blurb": "An off-by-one, a null access and a float-money bug.",
+  "filename": "src/cart.ts",
+  "content": "export interface Item {\n  sku: string;\n  price: number;\n  qty: number;\n}\n\nexport function cartTotal(items: Item[]) {\n  let total = 0;\n  for (let i = 0; i <= items.length; i++) total += items[i].price * items[i].qty;\n  return total;\n}\n\nexport function applyCoupon(total: number, coupons: Record<string, number>, code?: string) {\n  const pct = coupons[code.toUpperCase()];\n  return total - total * (pct / 100);\n}\n\nexport function splitBill(total: number, people: number) {\n  return (total / people).toFixed(2);\n}\n",
+  "result": {
+    "mode": "file",
+    "requestedReviewers": [],
+    "riskTier": "high",
+    "whatChanged": "This module provides utility functions for a shopping cart, including calculating the total price, applying discount coupons, and splitting the bill.",
+    "inline": [
+      {
+        "fingerprint": "303ca417e318",
+        "file": "src/cart.ts",
+        "line": 9,
+        "severity": "critical",
+        "category": "bug",
+        "ruleKey": "off-by-one",
+        "title": "Off-by-one error causes crash on last iteration",
+        "body": "The loop condition `i <= items.length` allows `i` to equal `items.length`. At this index, `items[i]` is `undefined`, which will throw a `TypeError: Cannot read properties of undefined (reading 'price')` on every execution. Change the condition to `i < items.length` or use a `for...of` loop.",
+        "suggestion": "for (let i = 0; i < items.length; i++) total += items[i].price * items[i].qty;",
+        "quotedCode": "for (let i = 0; i <= items.length; i++) total += items[i].price * items[i].qty;",
+        "confidence": 1,
+        "alsoIn": []
+      },
+      {
+        "fingerprint": "b811997ab004",
+        "file": "src/cart.ts",
+        "line": 14,
+        "severity": "high",
+        "category": "bug",
+        "ruleKey": "unsafe-optional-access",
+        "title": "Potential crash when `code` is undefined and NaN return for invalid coupons",
+        "body": "The `code` parameter is marked as optional (`code?: string`), but `code.toUpperCase()` is called without checking if `code` is defined. This will throw a `TypeError` if no coupon is provided. Additionally, if the coupon code is not found in the `coupons` record, `pct` will be `undefined`, resulting in `NaN` being returned.",
+        "suggestion": "if (!code) return total; const pct = coupons[code.toUpperCase()]; if (pct === undefined) return total; return total - total * (pct / 100);",
+        "quotedCode": "const pct = coupons[code.toUpperCase()];",
+        "confidence": 1,
+        "alsoIn": []
+      },
+      {
+        "fingerprint": "bec9f4662009",
+        "file": "src/cart.ts",
+        "line": 19,
+        "severity": "low",
+        "category": "naming",
+        "ruleKey": "return-type-mismatch",
+        "title": "`splitBill` returns a string representation of the amount",
+        "body": "The `toFixed(2)` method returns a `string`, not a `number`. Callers of `splitBill` might expect a numeric value for further calculations. If a string is intended, converting it back to a number is usually preferred to avoid type mismatches in calculations.",
+        "suggestion": "return Number((total / people).toFixed(2));",
+        "quotedCode": "return (total / people).toFixed(2);",
+        "confidence": 0.8,
+        "alsoIn": []
+      }
+    ],
+    "summarized": [],
+    "droppedCount": 0,
+    "impact": [],
+    "skippedFiles": [],
+    "stats": {
+      "llmCalls": 1,
+      "durationMs": 12249
+    }
+  }
+}

@@ -13,6 +13,12 @@ export function fixable(result: Pick<TReviewResult, "inline" | "summarized">): T
 const eolOf = (s: string) => (s.includes("\r\n") ? "\r\n" : "\n");
 const withEol = (s: string, eol: string) => s.replace(/\r?\n/g, eol);
 
+/** A quote that starts with indentation but a fix that doesn't would pull the line to column 0. */
+function keepIndent(quote: string, fix: string): string {
+  const indent = /^[ \t]*/.exec(quote)?.[0] ?? "";
+  return indent && !/^\s/.test(fix) ? indent + fix : fix;
+}
+
 /** Swap `quotedCode` for `suggestion`, only when the quote occurs exactly once (never guess). */
 export function applySuggestion(content: string, quotedCode: string, suggestion: string): ApplyResult {
   const eol = eolOf(content);
@@ -20,7 +26,7 @@ export function applySuggestion(content: string, quotedCode: string, suggestion:
   const parts = content.split(quote);
   if (parts.length === 1) return { ok: false, reason: "not-found" };
   if (parts.length > 2) return { ok: false, reason: "ambiguous" };
-  return { ok: true, content: parts.join(withEol(suggestion, eol)) };
+  return { ok: true, content: parts.join(withEol(keepIndent(quotedCode, suggestion), eol)) };
 }
 
 /** Apply each finding in turn; findings whose quote is gone or repeated are reported, not forced. */

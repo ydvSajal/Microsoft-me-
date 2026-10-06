@@ -1,0 +1,65 @@
+{
+  "slug": "orders-api",
+  "label": "Orders API",
+  "blurb": "An injectable query, a missing await and a swallowed error.",
+  "filename": "src/orders.ts",
+  "content": "import { db } from \"./db\";\nimport { sendReceipt } from \"./mail\";\n\nexport async function findOrders(customerId: string, status: string) {\n  const rows = await db.query(\"SELECT * FROM orders WHERE customer_id = '\" + customerId + \"' AND status = '\" + status + \"'\");\n  return rows;\n}\n\nexport async function payOrder(orderId: string) {\n  const order = db.get(\"orders\", orderId);\n  if (order.total <= 0) throw new Error(\"nothing to pay\");\n  await db.update(\"orders\", orderId, { paid: true });\n  await sendReceipt(order.email, order.total).catch(() => {});\n  return order;\n}\n",
+  "result": {
+    "mode": "file",
+    "requestedReviewers": [],
+    "riskTier": "high",
+    "whatChanged": "Added functions to find orders by customer and status, and to process order payments including updating the database and sending a receipt.",
+    "inline": [
+      {
+        "fingerprint": "041317d82898",
+        "file": "src/orders.ts",
+        "line": 5,
+        "severity": "critical",
+        "category": "security",
+        "ruleKey": "sql-injection",
+        "title": "SQL injection vulnerability in findOrders",
+        "body": "Concatenating parameters directly into a SQL query string allows SQL injection attacks. If an attacker controls customerId or status, they can execute arbitrary SQL commands. Use parameterized queries instead.",
+        "suggestion": "const rows = await db.query(\"SELECT * FROM orders WHERE customer_id = ? AND status = ?\", [customerId, status]);",
+        "quotedCode": "  const rows = await db.query(\"SELECT * FROM orders WHERE customer_id = '\" + customerId + \"' AND status = '\" + status + \"'\");",
+        "confidence": 0.95,
+        "alsoIn": []
+      },
+      {
+        "fingerprint": "8034363918ea",
+        "file": "src/orders.ts",
+        "line": 10,
+        "severity": "high",
+        "category": "bug",
+        "ruleKey": "missing-await",
+        "title": "Missing await on asynchronous database call db.get",
+        "body": "The db.get call is likely asynchronous, similar to db.query and db.update. If it returns a Promise, accessing order.total and order.email synchronously will result in undefined or runtime errors. You should await the call.",
+        "suggestion": "  const order = await db.get(\"orders\", orderId);",
+        "quotedCode": "  const order = db.get(\"orders\", orderId);",
+        "confidence": 0.9,
+        "alsoIn": []
+      },
+      {
+        "fingerprint": "771b9bdf13a3",
+        "file": "src/orders.ts",
+        "line": 14,
+        "severity": "low",
+        "category": "bug",
+        "ruleKey": "stale-data-returned",
+        "title": "Returning stale order data",
+        "body": "The function updates the order's paid status in the database but returns the original order object fetched before the update. Callers will receive an object where paid is not updated. Consider returning the updated object or updating the local object's property before returning.",
+        "suggestion": "  return { ...order, paid: true };",
+        "quotedCode": "  return order;",
+        "confidence": 0.85,
+        "alsoIn": []
+      }
+    ],
+    "summarized": [],
+    "droppedCount": 0,
+    "impact": [],
+    "skippedFiles": [],
+    "stats": {
+      "llmCalls": 1,
+      "durationMs": 10162
+    }
+  }
+}

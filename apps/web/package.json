@@ -10,7 +10,8 @@
     "vercel-build": "prisma generate && if [ \"$VERCEL_ENV\" = production ]; then prisma migrate deploy; fi && next build",
     "typecheck": "prisma generate && next typegen && tsc --noEmit -p .",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "showcase:record": "tsx scripts/record-showcase.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

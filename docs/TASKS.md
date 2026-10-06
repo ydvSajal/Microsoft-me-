@@ -107,8 +107,8 @@ Ideas only from the Kodus review engine (AGPL: no code is copied). All on the si
 |---|---|---|---|---|
 | ☑ | **T-41** | Fix quality gate | `feat/t41-usable-fix` | `isUsableFix` rejects empty, whitespace-identical, unbalanced (brackets, strings, templates, comments) and diff-hunk fixes; fragment quotes may get fragment fixes; `toModelFinding` drops an unusable `suggestion` but keeps the finding |
 | ☑ | **T-42** | Severity definitions | `feat/t42-severity-defs` | One `SEVERITY_DEFINITIONS` constant feeds the review prompt (test guards drift), badge tooltips and a "What do severities mean?" legend |
-| ☑ | **T-43** | Copy fix prompt *(button click live check pending: needs a review result on screen; covered after T-44)* | `feat/t43-fix-prompt` | Per-finding and per-file "Copy prompt" produce a self-contained prompt (file, line, severity, problem, fix) for Cursor or Claude Code |
-| ☐ | **T-44** | Showcase reviews | `feat/t44-showcase` | Example buttons on `/review` show a recorded review instantly with no model or passcode; a test checks every snapshot parses and every `quotedCode` occurs in its file |
+| ☑ | **T-43** | Copy fix prompt | `feat/t43-fix-prompt` | Per-finding and per-file "Copy prompt" produce a self-contained prompt (file, line, severity, problem, fix) for Cursor or Claude Code |
+| ☑ | **T-44** | Showcase reviews | `feat/t44-showcase` | Example buttons on `/review` show a recorded review instantly with no model or passcode; a test checks every snapshot parses, every `quotedCode` occurs in its file, every fix applies and the file still balances afterwards. Apply also keeps the quote's indentation |
 
 ## Cut order if a gate slips
 
