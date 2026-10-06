@@ -76,25 +76,34 @@ Bring:
 
 ## 3. Demo script (~3 min)
 
-Everything runs on `ydvSajal/sift-demo-shop` (12 open PRs) and https://microsoft-me.vercel.app. Hero PR: **#2** `refactor(refund): simplify the refund amount check`. Sift flags a High bug (refunds ignore `refundedCents`) with a concrete fix. If you need a fresh run, push a trivial commit to `bug/refund-ignores-prior`.
+Live: https://microsoft-me.vercel.app. Local fallback: `pnpm --filter web dev` → http://localhost:3000 (needs `apps/web/.env.local`: copy the root `.env`; Next doesn't read it from the repo root). Demo passcode: `SIFT_DEMO_PASSCODE` in `.env`; it's only needed for a live upload, not the examples.
+PR mode runs on `ydvSajal/sift-demo-shop` (branch protection needs **1 human approval**; Sift only posts `COMMENT` reviews, never approves).
+
+Checked 2026-10-07: live and local `/api/review-file` return ranked findings with fixes in ~15 s; the three examples load instantly; `deploy-smoke` is green.
 
 | Time | Action | What the audience sees |
 |---|---|---|
 | 0:00 | Problem line: "~35% of AI review comments are useful. Reviewers stopped reading them." | Slide |
-| 0:20 | Open PR #2 on the demo shop; push a trivial commit to re-trigger the review | GitHub, the `Sift review` check running |
-| 0:40-1:30 | The review lands (~1 min) | `sift:risk-high` label; one ranked inline comment at `src/api/refund.ts:18` with a suggested fix; summary lists anything off the diff |
-| 1:30 | Open stack PRs #10-#12, then re-push without changes | Stack layers reviewed once; the re-push posts **nothing** |
-| 2:00 | Web: `/review` → drop a `.ts` file → click the risk badge → **Apply all** | Before/after fixes applied to the file in the browser |
-| 2:15 | Web: `/connect` → Select all → Queue | Repos listed, open PRs queued (needs `SIFT_GITHUB_TOKEN`; skip this row if it isn't set) |
-| 2:30 | Benchmark slide (`benchmark/results.md`): precision 67% vs naive 33%, 0 off-diff, 0 re-posts | Sift vs naive on the same model |
+| 0:20 | `/review` → click **Orders API** → click the `3 fixes` chip | Ranked findings: critical SQL injection, high missing `await`; diff preview per fix |
+| 0:50 | **Apply all**, then **Copy prompt** on one fix | The file is corrected in the browser; a paste-ready prompt for Cursor/Claude Code |
+| 1:10 | Drop a file you haven't shown (`choose a file`), enter the passcode, **Review** | Live review in ~15 s (up to ~60 s when Gemini is slow: keep talking, don't re-click) |
+| 1:40 | Open **PR #2** on the demo shop (`refactor(refund): simplify the refund amount check`) | `sift:risk-high` label; one ranked inline comment at `src/api/refund.ts:18` (High · bug: refunds ignore earlier refunds) with a suggested fix |
+| 2:10 | Open **PR #3** (`src/auth.ts:27`, Medium · security: use `timingSafeEqual`) and **PR #9** (low-severity convention nits) | Severity ranking: the serious finding is not buried by nits; branch protection shows a human must approve |
+| 2:30 | Stack PRs #10-#12 | Nothing re-posted; unchanged layers are skipped |
+| 2:40 | Benchmark slide (`benchmark/results.md`) | Sift vs naive on the same model |
 | 2:50 | Close: "Sift only comments; humans approve. It shows you its own precision." | - |
 
-Known limits (say them before a judge does): seeded-bug recall is 67%; one clean refactor (#7) gets `risk-high`; jobs queued on `/connect` stay Queued until the worker (T-33) exists.
+Don't open #12 on stage: it has a summary but no inline comments, and Copilot's own review on it failed with a quota error.
+`/connect` (repo picker) needs `SIFT_GITHUB_TOKEN`; skip it unless that's set. New shop-PR reviews reach the dashboard only if `SIFT_API_URL` and `SIFT_INGEST_SECRET` are set as shop repo secrets: today they are not, so show the dashboard's existing data.
+
+Known limits (say them before a judge does): seeded-bug recall is 67%; one clean refactor (#7) gets `risk-high`; jobs queued on `/connect` stay Queued until the worker (T-33) exists; the free fallback model sometimes returns findings without a fix.
 
 **If something fails live:**
-- Review slow (> 90 s) → keep talking over the stack slide, then return.
-- Review fails → switch to the backup video at the same timestamp. Don't debug on stage.
-- Wi-Fi dead → backup video (and buddy demo mode, if built).
+- Live upload slow (> 60 s) → keep talking over the slide; if still nothing, click **Cart totals** (cached) and say "recorded earlier".
+- Live site down → run it locally on :3000 (above), or play the backup video.
+- Model/provider error → the cached examples never call a model; use them.
+- Wi-Fi dead → backup video. Don't debug on stage.
+- PR-mode page broken → the PRs above are static; show them as screenshots from the backup video.
 
 ## 4. Break-glass (demo days only)
 
